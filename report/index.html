@@ -1,0 +1,190 @@
+<meta name="dash-one-writer">
+<style>
+  .ar-wrap { display: flex; flex-direction: column; gap: var(--cds-gap-xl); max-width: 1100px; }
+  .ar-head h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0 0 var(--cds-gap-sm); text-wrap: balance; }
+  .ar-lede { color: var(--color-fg); font-size: var(--cds-font-size-body); line-height: 1.6; max-width: 68ch; margin: 0; }
+  .ar-lede b { font-weight: var(--cds-font-weight-medium); }
+  .ar-section { display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+  .ar-section > h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+  .ar-section > p { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); max-width: 70ch; line-height: 1.5; }
+  .ar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: var(--cds-gap-md); }
+  .ar-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
+  .ar-card.wide { grid-column: 1 / -1; }
+  .ar-card h3 { margin: 0; font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); }
+  .ar-card .ar-sub { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); line-height: 1.5; }
+  .ar-chart { position: relative; min-height: 160px; width: 100%; }
+  .ar-chart svg text { fill: var(--cds-text-secondary); font-size: var(--cds-font-size-caption); font-family: var(--font-anthropic-sans); }
+  .ar-chart svg text.ar-val { fill: var(--color-fg); font-variant-numeric: tabular-nums; }
+  .ar-chart svg text.ar-lab { fill: var(--color-fg); }
+  .ar-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); max-width: 240px; line-height: 1.45; z-index: 2; }
+  .ar-tip .ar-tip-note { color: var(--cds-text-secondary); }
+  .ar-fail { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: var(--cds-pad-md) 0; }
+  .ar-notes { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.6; }
+  .ar-notes summary { cursor: pointer; color: var(--color-fg); }
+  .ar-notes ul { margin: var(--cds-gap-sm) 0 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: var(--cds-gap-xs); }
+  [data-dash-source-state=refreshing] { opacity: .5; }
+</style>
+
+<div class="ar-wrap" lang="th" data-read>
+  <header class="ar-head" id="summary">
+    <h1>แอปที่คนใช้มากที่สุด: ทั่วโลกเทียบกับประเทศไทย</h1>
+    <p class="ar-lede">
+      ระดับโลก <b data-draw="lead-global" data-source="leaders" data-field="app" data-where="scope=global">—</b> มีผู้ใช้ต่อเดือนมากที่สุดราว <b data-draw="lead-global-val" data-source="leaders" data-field="value" data-where="scope=global">—</b> พันล้านคน
+      ส่วนในไทย <b data-draw="lead-th" data-source="leaders" data-field="app" data-where="scope=th">—</b> มีสัดส่วนผู้ใช้สูงสุด <b data-draw="lead-th-val" data-source="leaders" data-field="value" data-where="scope=th">—</b>%
+      แต่แอปที่คนไทยชอบที่สุดคือ <b data-draw="lead-fav" data-source="leaders" data-field="app" data-where="scope=fav">—</b> (<b data-draw="lead-fav-val" data-source="leaders" data-field="value" data-where="scope=fav">—</b>% ของผู้ตอบ)
+    </p>
+  </header>
+
+  <section class="ar-section" id="global">
+    <h2>ทั่วโลก</h2>
+    <p>ตัวเลขผู้ใช้ต่อเดือน (MAU) เป็นค่าประมาณที่รวบรวมจากหลายแหล่ง แต่ละแหล่งให้ตัวเลขต่างกันได้ราว 5–15% ลำดับบนสุดสามอันดับ (Facebook, WhatsApp, Instagram) ห่างกันน้อยจนสลับกันได้ตามแหล่งข้อมูล</p>
+    <div class="ar-grid">
+      <div class="ar-card wide" id="global-mau-card">
+        <h3>ผู้ใช้ต่อเดือน 10 อันดับแรก (พันล้านคน)</h3>
+        <p class="ar-sub">ข้อมูลปี 2026 · สีแยกตามหมวดแอป</p>
+        <div class="ar-chart" data-draw="chart-mau" data-source="global_mau" id="chart-mau"></div>
+      </div>
+      <div class="ar-card" id="downloads-card">
+        <h3>ยอดดาวน์โหลดทั้งปี 2025 (ล้านครั้ง)</h3>
+        <p class="ar-sub">AppMagic · ChatGPT แซง TikTok เป็นแอปที่ถูกดาวน์โหลดมากที่สุด แต่ Sensor Tower ยังให้ TikTok อันดับ 1</p>
+        <div class="ar-chart" data-draw="chart-dl" data-source="global_downloads" id="chart-dl"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ar-section" id="thailand">
+    <h2>ประเทศไทย</h2>
+    <p>จากรายงาน DataReportal Digital 2027 Thailand (เผยแพร่ 4 พ.ย. 2026) ผลสำรวจผู้ใช้อินเทอร์เน็ตอายุ 16–64 ปีที่ตอบว่าใช้แต่ละแพลตฟอร์มในเดือนที่ผ่านมา</p>
+    <div class="ar-grid">
+      <div class="ar-card" id="th-usage-card">
+        <h3>สัดส่วนผู้ใช้อินเทอร์เน็ตที่ใช้แอป (%)</h3>
+        <p class="ar-sub">สี่แอปแรกใกล้กันมาก ห่างกันไม่ถึง 6 จุด</p>
+        <div class="ar-chart" data-draw="chart-th" data-source="th_usage" id="chart-th"></div>
+      </div>
+      <div class="ar-card" id="th-fav-card">
+        <h3>แพลตฟอร์มที่ชอบที่สุด (%)</h3>
+        <p class="ar-sub">คนไทยใช้ Facebook มากที่สุด แต่เลือก TikTok เป็นแอปโปรด</p>
+        <div class="ar-chart" data-draw="chart-fav" data-source="th_favorite" id="chart-fav"></div>
+      </div>
+      <div class="ar-card wide" id="th-commerce-card">
+        <h3>ช้อปปิ้งและเดลิเวอรี: คะแนนแบรนด์ที่คนไทยแนะนำ</h3>
+        <p class="ar-sub">YouGov Best Brand Rankings (ต.ค. 2024 – ต.ค. 2025) เป็นคะแนนการแนะนำ ไม่ใช่จำนวนผู้ใช้</p>
+        <div class="ar-chart" data-draw="chart-com" data-source="th_commerce" id="chart-com"></div>
+      </div>
+    </div>
+  </section>
+
+  <details class="ar-notes" id="notes">
+    <summary>ข้อควรระวังและแหล่งข้อมูล</summary>
+    <ul>
+      <li>ตัวเลขแต่ละกราฟวัดคนละแบบ: MAU (คนที่ใช้ในเดือน), ยอดดาวน์โหลด, % ผู้ตอบแบบสำรวจ และคะแนนแบรนด์ จึงเทียบข้ามกราฟโดยตรงไม่ได้</li>
+      <li>ตัวเลข MAU ทั่วโลกรวบรวมจากบทความสรุป (เช่น DataReportal, Piktochart, Dreamgrow) ไม่ใช่รายงานบริษัทโดยตรง ควรตรวจกับรายงานนักลงทุนของ Meta, Alphabet, ByteDance, Tencent ก่อนนำไปอ้างอิง</li>
+      <li>ข้อมูลไทยมาจากบทสรุปภาษาไทยของ DataReportal Digital 2027 Thailand (rainmaker.in.th) และ YouGov Thailand</li>
+      <li>ยังไม่มีข้อมูลผู้ใช้แอปธนาคารและภาครัฐ (เช่น K PLUS, เป๋าตัง) ที่เชื่อถือได้ จึงยังไม่รวมไว้</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+  dash.calc('leaders', {
+    title: 'แอปอันดับ 1 แต่ละมุมมอง',
+    description: 'แอปที่มีค่าสูงสุดในข้อมูล MAU ทั่วโลก, สัดส่วนผู้ใช้ในไทย และแอปโปรดของคนไทย',
+    inputs: ['global_mau', 'th_usage', 'th_favorite'],
+    fn: (global_mau, th_usage, th_favorite) => {
+      const top = (rows, field) => rows.reduce((a, r) => (a == null || +r[field] > +a[field] ? r : a), null);
+      const out = [];
+      const g = top(global_mau, 'mau_billion'); if (g) out.push({scope: 'global', app: g.app, value: +g.mau_billion});
+      const t = top(th_usage, 'pct_users_16plus'); if (t) out.push({scope: 'th', app: t.app, value: +t.pct_users_16plus});
+      const f = top(th_favorite, 'pct_favorite'); if (f) out.push({scope: 'fav', app: f.app, value: +f.pct_favorite});
+      return out;
+    }
+  });
+</script>
+
+<script>
+  window.arText = function (scope, field, fmt) {
+    return (el) => {
+      const d = dash.data('leaders');
+      const row = d.status === 'ok' && Array.isArray(d.data) ? d.data.find((r) => r.scope === scope) : null;
+      el.textContent = row ? (fmt ? fmt(row[field]) : row[field]) : '—';
+    };
+  };
+  const f2 = d3.format('.2f'), f1 = d3.format('.1f');
+  dash.draw('lead-global', arText('global', 'app'));
+  dash.draw('lead-global-val', arText('global', 'value', f2));
+  dash.draw('lead-th', arText('th', 'app'));
+  dash.draw('lead-th-val', arText('th', 'value', f1));
+  dash.draw('lead-fav', arText('fav', 'app'));
+  dash.draw('lead-fav-val', arText('fav', 'value', f1));
+</script>
+
+<script>
+  // Horizontal bar chart shared by every card.
+  window.arBars = function (opts) {
+    return (el) => {
+      const d = dash.data(opts.source);
+      el.replaceChildren();
+      if (d.status === 'error') { const p = document.createElement('div'); p.className = 'ar-fail'; p.textContent = 'โหลดข้อมูลไม่สำเร็จ'; el.append(p); return; }
+      if (d.status !== 'ok') { el.textContent = '—'; return; }
+      const rows = d.data.map((r, i) => ({...r, _v: +r[opts.value], _i: i})).sort((a, b) => b._v - a._v);
+      const W = Math.max(260, el.clientWidth || 360);
+      const rowH = 30, top = 4, H = top + rows.length * rowH + 4;
+      const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`)
+        .attr('role', 'img').attr('aria-label', opts.aria);
+      // measure label widths
+      const probe = svg.append('g');
+      let labW = 0, valW = 0;
+      rows.forEach((r) => {
+        const t = probe.append('text').attr('class', 'ar-lab').text(r.app); labW = Math.max(labW, t.node().getComputedTextLength());
+        const v = probe.append('text').attr('class', 'ar-val').text(opts.fmt(r._v)); valW = Math.max(valW, v.node().getComputedTextLength());
+      });
+      probe.remove();
+      const left = Math.ceil(labW) + 10, right = Math.ceil(valW) + 10;
+      const x = d3.scaleLinear().domain([0, (opts.max ?? d3.max(rows, (r) => r._v)) || 1]).range([left, W - right]);
+      const cats = opts.colorBy ? Array.from(new Set(d.data.map((r) => r[opts.colorBy]))) : null;
+      const color = (r) => cats ? dash.colors[cats.indexOf(r[opts.colorBy]) % dash.colors.length] : dash.colors[0];
+
+      const tip = document.createElement('div'); tip.className = 'ar-tip'; tip.hidden = true; el.append(tip);
+      const show = (ev, r) => {
+        tip.replaceChildren();
+        const b = document.createElement('div'); b.style.fontWeight = '500'; b.textContent = `${r.app}: ${opts.fmt(r._v)} ${opts.unit}`; tip.append(b);
+        const extra = [opts.colorBy ? r[opts.colorBy] : null, r.note].filter(Boolean).join(' · ');
+        if (extra) { const n = document.createElement('div'); n.className = 'ar-tip-note'; n.textContent = extra; tip.append(n); }
+        tip.hidden = false;
+        const box = el.getBoundingClientRect();
+        const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - box.left;
+        const py = (ev.touches ? ev.touches[0].clientY : ev.clientY) - box.top;
+        const tw = tip.offsetWidth;
+        tip.style.left = Math.max(0, Math.min(box.width - tw, px + 12)) + 'px';
+        tip.style.top = (py + 14) + 'px';
+      };
+      const hide = () => { tip.hidden = true; };
+
+      const g = svg.selectAll('g.row').data(rows).join('g').attr('class', 'row')
+        .attr('transform', (r, i) => `translate(0,${top + i * rowH})`);
+      g.append('rect').attr('x', 0).attr('y', 0).attr('width', W).attr('height', rowH).style('fill', 'transparent');
+      g.append('text').attr('class', 'ar-lab').attr('x', left - 8).attr('y', rowH / 2).attr('dy', '0.35em').attr('text-anchor', 'end').text((r) => r.app);
+      g.append('rect').attr('x', left).attr('y', 6).attr('height', rowH - 12).attr('rx', 3)
+        .attr('width', (r) => Math.max(1, x(r._v) - left)).style('fill', color);
+      g.append('text').attr('class', 'ar-val').attr('x', (r) => x(r._v) + 6).attr('y', rowH / 2).attr('dy', '0.35em').text((r) => opts.fmt(r._v));
+      g.on('pointermove', show).on('pointerleave', hide).on('touchstart', show, {passive: true});
+
+      if (cats) {
+        const leg = document.createElement('div');
+        leg.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:var(--cds-font-size-caption);color:var(--cds-text-secondary)';
+        cats.forEach((c, i) => {
+          const s = document.createElement('span'); s.style.cssText = 'display:inline-flex;align-items:center;gap:6px';
+          const sw = document.createElement('i'); sw.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:2px;background:${dash.colors[i % dash.colors.length]}`;
+          s.append(sw, document.createTextNode(c)); leg.append(s);
+        });
+        el.append(leg);
+      }
+    };
+  };
+  const fmt2 = d3.format('.2f'), fmt1 = d3.format('.1f'), fmt0 = d3.format(',');
+  dash.draw('chart-mau', arBars({source: 'global_mau', value: 'mau_billion', fmt: fmt2, unit: 'พันล้านคน', colorBy: 'category', aria: 'กราฟแท่งผู้ใช้ต่อเดือนของ 10 แอปยอดนิยมทั่วโลก หน่วยพันล้านคน'}));
+  dash.draw('chart-dl', arBars({source: 'global_downloads', value: 'downloads_million', fmt: fmt0, unit: 'ล้านครั้ง', aria: 'กราฟแท่งยอดดาวน์โหลดทั้งปี 2025 ของ ChatGPT, TikTok, Instagram'}));
+  dash.draw('chart-th', arBars({source: 'th_usage', value: 'pct_users_16plus', fmt: fmt1, unit: '%', max: 100, aria: 'กราฟแท่งสัดส่วนผู้ใช้อินเทอร์เน็ตไทยที่ใช้แต่ละแอป'}));
+  dash.draw('chart-fav', arBars({source: 'th_favorite', value: 'pct_favorite', fmt: fmt1, unit: '%', aria: 'กราฟแท่งแพลตฟอร์มที่คนไทยชอบที่สุด'}));
+  dash.draw('chart-com', arBars({source: 'th_commerce', value: 'yougov_score', fmt: fmt0, unit: 'คะแนน', aria: 'กราฟแท่งคะแนนแนะนำแบรนด์ช้อปปิ้งและเดลิเวอรีในไทยจาก YouGov'}));
+</script>
