@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CafeTrip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500&family=Noto+Sans+Thai:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">☕</span>
+        <div>
+          <h1>CafeTrip</h1>
+          <p class="tag">คาเฟ่น่าไปทั่วไทย พร้อมมุมถ่ายรูปและเวลาแสงสวย</p>
+        </div>
+      </div>
+      <button class="trip-btn" id="tripBtn" type="button" aria-controls="tripPanel" aria-expanded="false">
+        ทริปของฉัน <span class="count" id="tripCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="sample-note">ต้นแบบ: ร้านในหน้านี้เป็น<strong>ร้านสมมติ</strong>สำหรับทดสอบหน้าจอ</p>
+
+    <section class="controls" aria-label="ค้นหาและกรอง">
+      <label class="search">
+        <span class="sr">ค้นหา</span>
+        <input id="q" type="search" placeholder="ค้นหาชื่อร้าน ย่าน หรือมุมถ่ายรูป…" autocomplete="off">
+      </label>
+      <div class="filter-row">
+        <span class="filter-label">จังหวัด</span>
+        <div class="chips" id="provinceChips" role="group" aria-label="จังหวัด"></div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">สไตล์</span>
+        <div class="chips" id="styleChips" role="group" aria-label="สไตล์"></div>
+      </div>
+      <div class="view-toggle" role="tablist" aria-label="มุมมอง">
+        <button type="button" role="tab" id="tabList" aria-selected="true">รายการ</button>
+        <button type="button" role="tab" id="tabMap" aria-selected="false">แผนที่</button>
+      </div>
+    </section>
+
+    <p class="result-count" id="resultCount" aria-live="polite"></p>
+
+    <section id="listView" class="grid" aria-label="รายการคาเฟ่"></section>
+    <section id="mapView" class="map-wrap" hidden>
+      <div id="map" aria-label="แผนที่คาเฟ่"></div>
+    </section>
+  </main>
+
+  <!-- รายละเอียดร้าน -->
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="sheet" id="detail" role="dialog" aria-modal="true" aria-labelledby="dName" hidden>
+    <button class="close" type="button" data-close aria-label="ปิด">×</button>
+    <div class="sheet-cover" id="dCover"></div>
+    <div class="sheet-body">
+      <p class="eyebrow" id="dWhere"></p>
+      <h2 id="dName"></h2>
+      <div class="pills" id="dStyles"></div>
+      <dl class="facts">
+        <div><dt>เปิด</dt><dd id="dHours"></dd></div>
+        <div><dt>วันหยุด</dt><dd id="dClosed"></dd></div>
+        <div><dt>งบต่อคน</dt><dd id="dBudget"></dd></div>
+        <div><dt>เมนูเด่น</dt><dd id="dSig"></dd></div>
+      </dl>
+      <div class="light">
+        <div class="light-item gold"><span>☀️ แสงสวย</span><strong id="dGold"></strong></div>
+        <div class="light-item calm"><span>🤫 คนน้อย</span><strong id="dQuiet"></strong></div>
+      </div>
+      <h3>มุมถ่ายรูปเด่น</h3>
+      <ol class="spots" id="dSpots"></ol>
+      <div class="actions">
+        <button class="primary" type="button" id="dAdd"></button>
+        <a class="secondary" id="dMaps" target="_blank" rel="noopener">เปิดใน Google Maps</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ทริปของฉัน -->
+  <aside class="sheet trip" id="tripPanel" role="dialog" aria-modal="true" aria-labelledby="tripTitle" hidden>
+    <button class="close" type="button" data-close aria-label="ปิด">×</button>
+    <div class="sheet-body">
+      <h2 id="tripTitle">ทริปของฉัน</h2>
+      <p class="muted" id="tripHint">เรียงตามเวลาแสงสวยของแต่ละร้าน</p>
+      <ol class="timeline" id="tripList"></ol>
+      <p class="empty" id="tripEmpty">ยังไม่มีร้านในทริป กด “เพิ่มในทริป” ที่ร้านที่อยากไป</p>
+      <div class="actions">
+        <a class="primary" id="tripRoute" target="_blank" rel="noopener" hidden>ดูเส้นทางทั้งหมดใน Google Maps</a>
+        <button class="secondary" type="button" id="tripClear" hidden>ล้างทริป</button>
+      </div>
+    </div>
+  </aside>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="data/cafes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
