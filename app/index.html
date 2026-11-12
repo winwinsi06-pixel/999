@@ -4,6 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CafeTrip</title>
+  <meta name="description" content="คาเฟ่น่าไปทั่วไทย พร้อมมุมถ่ายรูป เวลาแสงสวย และวางทริปคาเฟ่ฮอปปิ้ง">
+  <meta name="theme-color" content="#3f6b4f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="CafeTrip">
+  <meta property="og:title" content="CafeTrip คาเฟ่น่าไปทั่วไทย">
+  <meta property="og:description" content="มุมถ่ายรูป เวลาแสงสวย และวางทริปคาเฟ่ฮอปปิ้ง">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500&family=Noto+Sans+Thai:wght@400;500;600&display=swap">
@@ -14,7 +23,7 @@
   <header class="top">
     <div class="top-inner">
       <div class="brand">
-        <span class="logo" aria-hidden="true">☕</span>
+        <img class="logo" src="icons/icon-192.png" alt="" width="40" height="40">
         <div>
           <h1>CafeTrip</h1>
           <p class="tag">คาเฟ่น่าไปทั่วไทย พร้อมมุมถ่ายรูปและเวลาแสงสวย</p>
@@ -28,6 +37,12 @@
 
   <main class="wrap">
     <p class="sample-note">ต้นแบบ: ร้านในหน้านี้เป็น<strong>ร้านสมมติ</strong>สำหรับทดสอบหน้าจอ</p>
+
+    <div class="install" id="installBox" hidden>
+      <span id="installText">ติดตั้ง CafeTrip ไว้บนหน้าจอมือถือ เปิดได้เหมือนแอป</span>
+      <button type="button" class="primary small" id="installBtn">ติดตั้ง</button>
+      <button type="button" class="dismiss" id="installDismiss" aria-label="ไม่ต้องแสดงอีก">×</button>
+    </div>
 
     <section class="controls" aria-label="ค้นหาและกรอง">
       <label class="search">

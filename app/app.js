@@ -211,6 +211,36 @@
   $('tabList').addEventListener('click', () => setView('list'));
   $('tabMap').addEventListener('click', () => setView('map'));
 
+  // ---- Install (PWA) ----
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
+  }
+  const dismissed = () => { try { return localStorage.getItem('cafetrip.installDismissed') === '1'; } catch (e) { return false; } };
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); deferredPrompt = e;
+    if (!dismissed()) $('installBox').hidden = false;
+  });
+  // iPhone/iPad have no install prompt: show the manual steps instead.
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIOS && !standalone && !dismissed()) {
+    $('installText').textContent = 'ติดตั้งบน iPhone: กดปุ่มแชร์ ⬆️ ใน Safari แล้วเลือก “เพิ่มไปยังหน้าจอโฮม”';
+    $('installBtn').hidden = true;
+    $('installBox').hidden = false;
+  }
+  $('installBtn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice.catch(() => null);
+    deferredPrompt = null; $('installBox').hidden = true;
+  });
+  $('installDismiss').addEventListener('click', () => {
+    $('installBox').hidden = true;
+    try { localStorage.setItem('cafetrip.installDismissed', '1'); } catch (e) { /* ignore */ }
+  });
+  window.addEventListener('appinstalled', () => { $('installBox').hidden = true; });
+
   renderChips($('provinceChips'), provinces, 'province');
   renderChips($('styleChips'), styles, 'style');
   render();

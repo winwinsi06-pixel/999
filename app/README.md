@@ -17,3 +17,17 @@ python3 -m http.server 8000
 
 ## เพิ่มร้าน
 คัดลอกหนึ่งก้อนใน `data/cafes.js` แล้วแก้ข้อมูล พิกัด lat/lng หาได้จาก Google Maps (คลิกขวาที่ร้าน)
+
+## ติดตั้งลงมือถือ (PWA)
+- Android / Chrome: กดปุ่ม "ติดตั้ง" ในหน้าเว็บ
+- iPhone: เปิดใน Safari → ปุ่มแชร์ → "เพิ่มไปยังหน้าจอโฮม"
+
+เมื่อแก้ไฟล์ในแอป ให้เปลี่ยน `VERSION` ใน `sw.js` (เช่น `cafetrip-v2`) มือถือที่ติดตั้งไว้จะได้โหลดของใหม่
+
+## ขึ้นเว็บ (GitHub Pages)
+ทุกครั้งที่ push เข้า `main` ระบบจะเอาโฟลเดอร์ `app/` ขึ้นเว็บให้อัตโนมัติ
+(ไฟล์ตั้งค่า: `.github/workflows/deploy-pages.yml`)
+
+ตั้งค่าครั้งแรกครั้งเดียว: GitHub repo → Settings → Pages → Source เลือก **GitHub Actions**
+
+ลิงก์เว็บ: https://winwinsi06-pixel.github.io/999/

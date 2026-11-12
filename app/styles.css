@@ -65,7 +65,14 @@ button { cursor: pointer; }
 }
 .top-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.logo { font-size: 28px; }
+.logo { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.install {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--accent-soft); color: var(--ink); border-radius: 12px; padding: 10px 12px; font-size: 14px;
+}
+.install > span { flex: 1 1 200px; min-width: 0; }
+.primary.small { padding: 6px 14px; font-size: 14px; }
+.dismiss { border: 0; background: transparent; color: var(--ink-soft); font-size: 20px; line-height: 1; }
 .brand h1 { font-size: 22px; line-height: 1.1; }
 .tag { margin: 0; color: var(--ink-soft); font-size: 13px; }
 .trip-btn {
