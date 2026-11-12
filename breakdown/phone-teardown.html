@@ -1,0 +1,260 @@
+<title>Smartphone Teardown Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: an exploded view of the phone, layer by layer from screen to back, then a parts list keyed to the same numbers. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --fg: #16202a;
+  --muted: #5b6875;
+  --line: #c9d2da;
+  --copper: #b8612a;
+  --glass: rgba(120, 170, 210, .22);
+  --glass-edge: #6f9cc0;
+  --slab: #e3e8ed;
+  --metal: #a9b4be;
+  --board: #2f6b4f;
+  --chip: #1f2830;
+  --batt: #7aa36b;
+  --part: #8794a1;
+  --lens: #0d1318;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --surface: #151d25; --fg: #e4eaf0; --muted: #94a2b0; --line: #2c3946; --copper: #e08a4e;
+    --glass: rgba(120, 170, 210, .16); --glass-edge: #6f9cc0; --slab: #1f2a35; --metal: #6c7a87; --board: #2f6b4f;
+    --chip: #0a0f13; --batt: #5f8a52; --part: #607080; --lens: #05080b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #151d25; --fg: #e4eaf0; --muted: #94a2b0; --line: #2c3946; --copper: #e08a4e;
+  --glass: rgba(120, 170, 210, .16); --glass-edge: #6f9cc0; --slab: #1f2a35; --metal: #6c7a87; --board: #2f6b4f;
+  --chip: #0a0f13; --batt: #5f8a52; --part: #607080; --lens: #05080b; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap {
+  max-width: 1100px; margin: 0 auto; display: grid; gap: 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+}
+header { display: grid; gap: 8px; max-width: 64ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); }
+.main { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.figure { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+.figure svg { display: block; width: 100%; min-width: 600px; height: auto; }
+.hint { font-size: 13px; color: var(--muted); padding: 10px 16px; border-top: 1px solid var(--line); min-width: 600px; }
+.legend { display: grid; gap: 18px; min-width: 0; }
+.layer h2 { font-family: var(--display); font-size: 16px; font-weight: 700; margin: 0 0 6px; display: flex; gap: 10px; align-items: baseline; }
+.layer h2 span { font-family: var(--mono); font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.layer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.item { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.item:hover, .item.on { background: color-mix(in srgb, var(--copper) 12%, transparent); }
+.item:focus-visible { outline: 2px solid var(--copper); outline-offset: 1px; }
+.num { font-family: var(--mono); font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--fg); color: var(--bg); margin-top: 1px; }
+.item.on .num { background: var(--copper); color: var(--surface); }
+.item b { font-weight: 600; display: block; }
+.item small { color: var(--muted); font-size: 13.5px; display: block; }
+footer { color: var(--muted); font-size: 13px; max-width: 70ch; }
+
+/* drawing */
+.lyr-name { font-family: var(--display); font-weight: 700; font-size: 14px; fill: var(--fg); }
+.lyr-sub { font-family: var(--mono); font-size: 10px; fill: var(--muted); letter-spacing: .06em; }
+.guide { stroke: var(--line); stroke-dasharray: 3 5; fill: none; }
+.mk circle { fill: var(--fg); stroke: var(--surface); stroke-width: 2; }
+.mk text { font-family: var(--mono); font-weight: 700; font-size: 10px; fill: var(--bg); text-anchor: middle; dominant-baseline: central; }
+.mk { cursor: pointer; }
+.mk.on circle { fill: var(--copper); }
+.mk.on text { fill: var(--surface); }
+.pt { transition: opacity .2s; }
+svg.focus .pt { opacity: .35; }
+svg.focus .pt.on { opacity: 1; stroke: var(--copper); stroke-width: 2.5; }
+@media (prefers-reduced-motion: reduce) { .pt { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Exploded view · 10 layers · 32 parts</div>
+    <h1>What's inside your phone</h1>
+    <p>A typical modern smartphone taken apart from the screen down to the back glass. Tap a number on the drawing or a part in the list to find it. Exact layouts differ by brand and model.</p>
+  </header>
+  <div class="main">
+    <div class="figure">
+      <svg id="art" viewBox="0 0 760 1225" role="img" aria-label="Exploded view of a smartphone in ten stacked layers, with numbered parts."></svg>
+      <div class="hint">Screen side at the top, back of the phone at the bottom. The phone lies on its side: the top edge (earpiece end) is on the left.</div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <footer>Parts shown are those found in most current phones. Some models add extra parts, such as a face-scanning dot projector, an under-screen fingerprint reader, a depth (LiDAR) sensor or a stylus slot. Others leave parts out, such as the telephoto camera or wireless charging.</footer>
+</div>
+
+<script>
+(function () {
+  // Phone footprint in local units: u = across the width (0–160), v = along the length (0–330, earpiece end at v=0).
+  const PW = 160, PL = 330, X0 = 30, KX = .5, KY = .42, GAP = 122, TOP = 24, S = 1.35;
+  const P = (u, v, i) => [X0 + S * (v + u * KX), TOP + i * GAP + S * u * KY];
+  const R = (u, v, w, h) => ({ t: 'r', u, v, w, h });
+  const C = (u, v, r) => ({ t: 'c', u, v, r });
+
+  // Layers from the screen side to the back. fill = token name; slab: 'full' | 'ghost' | 'glass'
+  const LAYERS = [
+    { name: 'Cover glass', sub: 'FRONT', slab: 'glass', parts: [
+      { n: 'Cover glass', d: 'Toughened glass that protects the screen and carries your touch through to the layer below.', s: R(0, 0, PW, PL), fill: 'none', m: [120, 200] },
+    ] },
+    { name: 'Display', sub: 'OLED + TOUCH', slab: 'none', parts: [
+      { n: 'OLED display panel', d: 'Millions of tiny pixels that each make their own light. Black pixels switch off completely.', s: R(4, 4, PW - 8, PL - 8), fill: 'chip', m: [120, 160] },
+      { n: 'Touch layer', d: 'A grid of transparent sensors that detects where your finger is. Usually built into the display.', s: null, m: [40, 220] },
+      { n: 'Display cable', d: 'A thin ribbon cable that connects the screen to the logic board.', s: R(70, 300, 20, 22), fill: 'copper' },
+    ] },
+    { name: 'Front sensors', sub: 'TOP EDGE', slab: 'ghost', parts: [
+      { n: 'Earpiece speaker', d: 'The small speaker you hold to your ear on calls. Many phones also use it for stereo sound.', s: R(55, 3, 40, 8), fill: 'part' },
+      { n: 'Front (selfie) camera', d: 'The camera for selfies and video calls. It looks out through a hole or notch in the screen.', s: C(118, 14, 6), fill: 'lens' },
+      { n: 'Proximity & light sensor', d: 'Turns the screen off when the phone is at your ear, and sets screen brightness to match the room.', s: R(28, 9, 14, 9), fill: 'chip' },
+    ] },
+    { name: 'Frame & buttons', sub: 'CHASSIS', slab: 'frame', parts: [
+      { n: 'Metal frame', d: 'The aluminium or steel band around the edge. Everything else is attached to it.', s: null, m: [80, 330] },
+      { n: 'Power / side button', d: 'Wakes and locks the phone. Held down, it turns the phone off or calls the assistant.', s: R(158, 100, 6, 30), fill: 'metal' },
+      { n: 'Volume buttons', d: 'Two buttons that turn volume up and down. Many phones also use them for screenshots.', s: [R(-4, 80, 6, 18), R(-4, 104, 6, 18)], fill: 'metal', m: [-1, 101] },
+      { n: 'SIM tray', d: 'A pop-out tray for your SIM card. Some phones only use an eSIM chip instead.', s: R(158, 170, 6, 30), fill: 'metal' },
+      { n: 'Antenna lines', d: 'Plastic gaps that split the metal frame into antennas for mobile signal, Wi-Fi and GPS.', s: [R(-2, 38, 4, 5), R(-2, 287, 4, 5), R(158, 38, 4, 5), R(158, 287, 4, 5)], fill: 'part', m: [0, 290] },
+    ] },
+    { name: 'Logic board', sub: 'MAINBOARD', slab: 'none', parts: [
+      { n: 'Processor (SoC)', d: 'The phone’s brain: CPU, graphics and AI cores on one chip, called a system on a chip.', s: R(55, 35, 35, 35), fill: 'chip' },
+      { n: 'RAM (memory)', d: 'Short-term working memory for the apps you have open. Often stacked right on top of the processor.', s: R(100, 30, 30, 20), fill: 'chip' },
+      { n: 'Storage (flash)', d: 'Where your photos, apps and files are kept, even when the phone is off. This is the GB number you pay for.', s: R(100, 60, 30, 25), fill: 'chip' },
+      { n: 'Modem', d: 'Talks to mobile networks (4G and 5G) for calls, texts and data.', s: R(20, 40, 25, 25), fill: 'chip' },
+      { n: 'Wi-Fi & Bluetooth chip', d: 'Connects to Wi-Fi networks, earbuds, watches and other nearby devices.', s: R(20, 80, 25, 20), fill: 'chip' },
+      { n: 'Power management chip', d: 'Controls charging and sends the right voltage to every other part.', s: R(55, 95, 30, 23), fill: 'chip' },
+    ], board: R(10, 20, 140, 105) },
+    { name: 'Battery', sub: 'LITHIUM-ION', slab: 'none', parts: [
+      { n: 'Battery', d: 'A flat lithium-ion cell, usually 3,000–5,000 mAh. It takes up most of the space inside.', s: R(15, 135, 130, 157), fill: 'batt' },
+      { n: 'Battery connector', d: 'A small plug that joins the battery to the logic board. Repairers unplug it first.', s: R(70, 122, 20, 10), fill: 'copper' },
+    ] },
+    { name: 'Bottom parts', sub: 'BOTTOM EDGE', slab: 'ghost', parts: [
+      { n: 'Loudspeaker', d: 'The main speaker for music, videos and speakerphone.', s: R(12, 298, 43, 27), fill: 'part' },
+      { n: 'USB-C charging port', d: 'Where the cable plugs in for charging and data. Some older phones use Lightning or micro-USB.', s: R(65, 318, 30, 14), fill: 'metal' },
+      { n: 'Microphone', d: 'Picks up your voice on calls. Phones have 2–4 mics to cancel background noise.', s: R(120, 320, 8, 8), fill: 'chip' },
+      { n: 'Vibration motor', d: 'Makes the buzzes and taps you feel for alerts and keyboard clicks.', s: R(105, 290, 45, 22), fill: 'metal' },
+    ] },
+    { name: 'Rear cameras', sub: 'CAMERA BLOCK', slab: 'ghost', parts: [
+      { n: 'Main (wide) camera', d: 'The biggest sensor and the camera used for most photos.', s: C(30, 30, 13), fill: 'lens' },
+      { n: 'Ultra-wide camera', d: 'Fits more into the frame. Often also used for close-up (macro) shots.', s: C(30, 62, 13), fill: 'lens' },
+      { n: 'Telephoto camera', d: 'Zooms in optically, for example 3× or 5×, without losing detail.', s: C(62, 30, 13), fill: 'lens' },
+      { n: 'Flash', d: 'An LED light for photos in the dark and for the torch.', s: C(62, 62, 6), fill: 'copper' },
+    ], board: R(10, 10, 72, 72) },
+    { name: 'Charging coil', sub: 'WIRELESS', slab: 'ghost', parts: [
+      { n: 'Wireless charging coil', d: 'A flat copper coil that picks up power from a charging pad, with no cable.', s: 'coil', m: [80, 200] },
+      { n: 'NFC antenna', d: 'A loop antenna for tap-to-pay and reading cards, a few centimetres away.', s: 'nfc', m: [80, 262] },
+    ] },
+    { name: 'Back glass', sub: 'BACK', slab: 'glass', parts: [
+      { n: 'Back glass', d: 'The back cover. Glass lets wireless charging through. Cheaper phones use plastic.', s: null, m: [120, 250] },
+      { n: 'Camera bump cover', d: 'A raised ring with sapphire or glass windows that protects the rear lenses.', s: R(8, 8, 76, 76), fill: 'none', m: [84, 84] },
+    ] },
+  ];
+
+  const svg = document.getElementById('art'), NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
+  const poly = pts => pts.map(p => p.map(n => n.toFixed(1)).join(',')).join(' ');
+  const rectPts = (s, i) => [P(s.u, s.v, i), P(s.u, s.v + s.h, i), P(s.u + s.w, s.v + s.h, i), P(s.u + s.w, s.v, i)];
+  const circPts = (u, v, r, i) => Array.from({ length: 36 }, (_, k) => { const a = k / 36 * Math.PI * 2; return P(u + Math.cos(a) * r, v + Math.sin(a) * r, i); });
+  const fillOf = f => f === 'none' ? 'none' : `var(--${f})`;
+
+  // exploded-view guide lines joining the corners of each layer
+  [[0, 0], [0, PL], [PW, PL]].forEach(([u, v]) => {
+    const a = P(u, v, 0), b = P(u, v, LAYERS.length - 1);
+    el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], class: 'guide' });
+  });
+
+  let num = 0; const index = [];
+  LAYERS.forEach((L, i) => {
+    const g = el('g', {});
+    const outline = rectPts(R(0, 0, PW, PL), i);
+    if (L.slab === 'glass') el('polygon', { points: poly(outline), fill: 'var(--glass)', stroke: 'var(--glass-edge)', 'stroke-width': 1.5 }, g);
+    else if (L.slab === 'ghost') el('polygon', { points: poly(outline), fill: 'none', stroke: 'var(--line)', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' }, g);
+    else if (L.slab === 'frame') {
+      el('polygon', { points: poly(outline), fill: 'var(--metal)', stroke: 'var(--fg)', 'stroke-width': 1 }, g);
+      el('polygon', { points: poly(rectPts(R(7, 7, PW - 14, PL - 14), i)), fill: 'var(--surface)', stroke: 'var(--fg)', 'stroke-width': 1 }, g);
+    } else el('polygon', { points: poly(outline), fill: 'var(--slab)', stroke: 'var(--line)', 'stroke-width': 1 }, g);
+    if (L.board) el('polygon', { points: poly(rectPts(L.board, i)), fill: i === 4 ? 'var(--board)' : 'var(--chip)', stroke: 'var(--fg)', 'stroke-width': 1 }, g);
+    if (i === 9) el('polygon', { points: poly(outline), fill: 'none', stroke: 'var(--glass-edge)', 'stroke-width': 1.5 }, g);
+
+    // layer name on the right
+    const nameAt = P(PW, PL, i);
+    el('text', { x: nameAt[0] + 18, y: nameAt[1] - 22, class: 'lyr-name' }, g).textContent = L.name;
+    el('text', { x: nameAt[0] + 18, y: nameAt[1] - 8, class: 'lyr-sub' }, g).textContent = L.sub;
+
+    L.parts.forEach(p => {
+      num++; p.id = num; p.layer = i;
+      const shapes = [];
+      const list = Array.isArray(p.s) ? p.s : (p.s ? [p.s] : []);
+      if (p.s === 'coil') {
+        [44, 36, 28, 20].forEach(r => shapes.push(el('polygon', { points: poly(circPts(80, 200, r, i)), fill: 'none', stroke: 'var(--copper)', 'stroke-width': 2.2, class: 'pt' }, g)));
+      } else if (p.s === 'nfc') {
+        shapes.push(el('polygon', { points: poly(rectPts(R(22, 140, 116, 122), i)), fill: 'none', stroke: 'var(--copper)', 'stroke-width': 1.6, 'stroke-dasharray': '6 3', class: 'pt' }, g));
+      } else list.forEach(s => {
+        if (s === 'coil' || s === 'nfc') return;
+        const pts = s.t === 'c' ? circPts(s.u, s.v, s.r, i) : rectPts(s, i);
+        shapes.push(el('polygon', { points: poly(pts), fill: fillOf(p.fill), stroke: p.fill === 'none' ? 'var(--glass-edge)' : 'var(--fg)', 'stroke-width': p.fill === 'none' ? 1.5 : .8, class: 'pt' }, g));
+      });
+      // marker position
+      let m = p.m;
+      if (!m) { const s = list[0]; m = s.t === 'c' ? [s.u, s.v] : [s.u + s.w / 2, s.v + s.h / 2]; }
+      const at = P(m[0], m[1], i);
+      const mk = el('g', { class: 'mk', 'data-id': num, tabindex: 0, role: 'button', 'aria-label': `${num}. ${p.n}` }, svg);
+      el('circle', { cx: at[0], cy: at[1], r: 9 }, mk);
+      el('text', { x: at[0], y: at[1] + .5 }, mk).textContent = num;
+      index.push({ p, shapes, mk });
+    });
+  });
+
+  // legend
+  const legend = document.getElementById('legend');
+  LAYERS.forEach(L => {
+    const sec = document.createElement('section'); sec.className = 'layer';
+    sec.innerHTML = `<h2>${L.name} <span>${L.sub}</span></h2>`;
+    const ul = document.createElement('ul');
+    L.parts.forEach(p => {
+      const li = document.createElement('li'); li.className = 'item'; li.tabIndex = 0; li.dataset.id = p.id;
+      li.innerHTML = `<span class="num">${p.id}</span><span><b>${p.n}</b><small>${p.d}</small></span>`;
+      ul.appendChild(li);
+    });
+    sec.appendChild(ul); legend.appendChild(sec);
+  });
+
+  // linked highlighting
+  let current = null;
+  function select(id) {
+    current = current === id ? null : id;
+    svg.classList.toggle('focus', current != null);
+    index.forEach(({ p, shapes, mk }) => {
+      const on = p.id === current;
+      mk.classList.toggle('on', on); shapes.forEach(s => s.classList.toggle('on', on));
+    });
+    document.querySelectorAll('.item').forEach(li => li.classList.toggle('on', +li.dataset.id === current));
+    return current;
+  }
+  svg.addEventListener('click', e => {
+    const mk = e.target.closest('.mk'); if (!mk) return;
+    if (select(+mk.dataset.id) != null) {
+      const li = legend.querySelector(`.item[data-id="${mk.dataset.id}"]`);
+      li.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    }
+  });
+  legend.addEventListener('click', e => { const li = e.target.closest('.item'); if (li) select(+li.dataset.id); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target.closest && e.target.closest('.mk, .item'); if (!t) return;
+    e.preventDefault(); select(+t.dataset.id);
+  });
+})();
+</script>

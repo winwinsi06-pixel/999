@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>Phone Teardown Clip</title>
+<style>
+@font-face { font-family: Kanit; font-weight: 500; src: url(../stick-figure/fonts/kanit-500-thai.woff2) format("woff2"); unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC; }
+@font-face { font-family: Kanit; font-weight: 500; src: url(../stick-figure/fonts/kanit-500-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2010-2026; }
+@font-face { font-family: Kanit; font-weight: 700; src: url(../stick-figure/fonts/kanit-700-thai.woff2) format("woff2"); unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC; }
+@font-face { font-family: Kanit; font-weight: 700; src: url(../stick-figure/fonts/kanit-700-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2010-2026; }
+html, body { margin: 0; background: #222; }
+canvas { display: block; width: 360px; height: 640px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script src="phone-clip-timeline.js"></script>
+<script>
+// Vertical teardown clip (1080x1920). Timing comes from the voiceover (phone-clip-timeline.js, made by build-voice.py).
+// renderAt(t) draws the frame at time t (seconds).
+const W = 1080, H = 1920, DUR = TL.dur;
+const C = { bg: '#eef1f4', grid: '#dfe5eb', card: '#ffffff', ink: '#16202a', muted: '#5b6875', copper: '#c2662b',
+  glass: 'rgba(120,170,210,.30)', glassEdge: '#5d8db3', slab: '#dde3e9', metal: '#9aa6b1', board: '#2f6b4f',
+  chip: '#1f2830', batt: '#7aa36b', part: '#7d8a97', lens: '#0d1318', line: '#c3ccd5' };
+const FONT = 'Kanit, Loma, sans-serif';
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const back = k => { const c1 = 1.7, c3 = c1 + 1; return k <= 0 ? 0 : 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+
+// ---------- phone data (u across width 0–160, v along length 0–330, earpiece end at v=0) ----------
+const PW = 160, PL = 330;
+const R = (u, v, w, h) => ({ t: 'r', u, v, w, h }), Ci = (u, v, r) => ({ t: 'c', u, v, r });
+const LAYERS = [
+  { name: 'กระจกหน้าจอ', d: 'กระจกนิรภัย กันรอย และส่งสัมผัสจากนิ้วลงไปชั้นล่าง', slab: 'glass', parts: [
+    { n: 'กระจกหน้าจอ', m: [80, 165] } ] },
+  { name: 'จอแสดงผล', d: 'จอ OLED มีพิกเซลเรืองแสงเองนับล้านดวง สีดำคือปิดไฟจริงๆ', slab: 'none', parts: [
+    { n: 'จอ OLED', s: R(4, 4, PW - 8, PL - 8), f: 'chip', m: [110, 120] },
+    { n: 'ทัชสกรีน', m: [50, 210] },
+    { n: 'สายแพจอ', s: R(70, 300, 20, 24), f: 'copper' } ] },
+  { name: 'เซ็นเซอร์ด้านหน้า', d: 'ปิดจอเองตอนแนบหู และปรับความสว่างตามแสงในห้อง', slab: 'ghost', parts: [
+    { n: 'ลำโพงสนทนา', s: R(55, 3, 40, 8), f: 'part' },
+    { n: 'กล้องหน้า', s: Ci(118, 14, 7), f: 'lens' },
+    { n: 'เซ็นเซอร์ระยะ/แสง', s: R(28, 9, 14, 9), f: 'chip' } ] },
+  { name: 'เฟรมและปุ่ม', d: 'โครงโลหะที่ทุกชิ้นยึดอยู่ ช่องพลาสติกเล็กๆ คือเสาอากาศ', slab: 'frame', parts: [
+    { n: 'เฟรมโลหะ', m: [80, 326] },
+    { n: 'ปุ่มเปิด/ปิด', s: R(156, 100, 8, 30), f: 'metal' },
+    { n: 'ปุ่มปรับเสียง', s: [R(-4, 80, 8, 18), R(-4, 104, 8, 18)], f: 'metal', m: [0, 101] },
+    { n: 'ถาดซิม', s: R(156, 170, 8, 30), f: 'metal' },
+    { n: 'เส้นเสาอากาศ', s: [R(-3, 38, 6, 5), R(-3, 287, 6, 5), R(157, 38, 6, 5), R(157, 287, 6, 5)], f: 'copper', m: [0, 290] } ] },
+  { name: 'เมนบอร์ด', d: 'สมองของมือถือ ชิปสำคัญทั้งหมดอยู่บนแผ่นเดียว', slab: 'none', board: R(10, 20, 140, 105), boardFill: 'board', parts: [
+    { n: 'ชิปประมวลผล', s: R(55, 35, 35, 35), f: 'chip' },
+    { n: 'แรม', s: R(100, 30, 30, 20), f: 'chip' },
+    { n: 'หน่วยความจำ', s: R(100, 60, 30, 25), f: 'chip' },
+    { n: 'โมเด็ม 5G', s: R(20, 40, 25, 25), f: 'chip' },
+    { n: 'ชิป Wi-Fi/บลูทูธ', s: R(20, 80, 25, 20), f: 'chip' },
+    { n: 'ชิปจัดการไฟ', s: R(55, 95, 30, 23), f: 'chip' } ] },
+  { name: 'แบตเตอรี่', d: 'ชิ้นที่ใหญ่ที่สุดในเครื่อง ประมาณ 3,000–5,000 mAh', slab: 'none', parts: [
+    { n: 'แบตลิเธียมไอออน', s: R(15, 135, 130, 157), f: 'batt' },
+    { n: 'ขั้วต่อแบต', s: R(70, 122, 20, 10), f: 'copper' } ] },
+  { name: 'ชิ้นส่วนด้านล่าง', d: 'มอเตอร์สั่น คือที่มาของเสียงตึกๆ เวลามีแจ้งเตือน', slab: 'ghost', parts: [
+    { n: 'ลำโพง', s: R(12, 298, 43, 27), f: 'part' },
+    { n: 'พอร์ต USB-C', s: R(65, 316, 30, 14), f: 'metal' },
+    { n: 'ไมโครโฟน', s: R(120, 320, 8, 8), f: 'chip' },
+    { n: 'มอเตอร์สั่น', s: R(105, 288, 45, 22), f: 'metal' } ] },
+  { name: 'กล้องหลัง', d: 'กล้องเทเลโฟโต้ซูมได้ 3–5 เท่า โดยภาพไม่แตก', slab: 'ghost', board: R(10, 10, 72, 72), boardFill: 'chip', parts: [
+    { n: 'กล้องหลัก', s: Ci(30, 30, 13), f: 'lens' },
+    { n: 'กล้องมุมกว้าง', s: Ci(30, 62, 13), f: 'lens' },
+    { n: 'กล้องเทเลโฟโต้', s: Ci(62, 30, 13), f: 'lens' },
+    { n: 'แฟลช', s: Ci(62, 62, 6), f: 'copper' } ] },
+  { name: 'ขดลวดชาร์จ', d: 'วางบนแท่นก็ชาร์จได้ ส่วน NFC ใช้แตะจ่ายเงิน', slab: 'ghost', parts: [
+    { n: 'ขดลวดชาร์จไร้สาย', s: 'coil', m: [80, 200] },
+    { n: 'เสาอากาศ NFC', s: 'nfc', m: [22, 262] } ] },
+  { name: 'ฝาหลัง', d: 'ใช้กระจก เพื่อให้คลื่นชาร์จไร้สายทะลุผ่านได้', slab: 'glass', board: R(8, 8, 76, 76), boardFill: 'none', parts: [
+    { n: 'ฝาหลังกระจก', m: [110, 230] },
+    { n: 'กรอบกล้อง', m: [84, 46] } ] },
+];
+
+// ---------- drawing helpers ----------
+function shapeOf(s, map, fill, stroke, lw) {
+  g.beginPath();
+  if (s.t === 'c') { for (let k = 0; k <= 36; k++) { const a = k / 36 * Math.PI * 2, p = map(s.u + Math.cos(a) * s.r, s.v + Math.sin(a) * s.r); k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); } }
+  else { [[s.u, s.v], [s.u, s.v + s.h], [s.u + s.w, s.v + s.h], [s.u + s.w, s.v]].forEach((q, k) => { const p = map(q[0], q[1]); k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); }
+  g.closePath();
+  if (fill && fill !== 'none') { g.fillStyle = C[fill] || fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); }
+}
+function drawLayer(L, map, lw, alpha) {
+  g.save(); g.globalAlpha = alpha;
+  const full = R(0, 0, PW, PL);
+  if (L.slab === 'glass') shapeOf(full, map, C.glass, C.glassEdge, lw * 1.5);
+  else if (L.slab === 'ghost') { g.setLineDash([lw * 4, lw * 4]); shapeOf(full, map, null, C.line, lw * 1.2); g.setLineDash([]); }
+  else if (L.slab === 'frame') { shapeOf(full, map, 'metal', C.ink, lw); shapeOf(R(8, 8, PW - 16, PL - 16), map, C.card, C.ink, lw); }
+  else shapeOf(full, map, 'slab', C.line, lw);
+  if (L.board) shapeOf(L.board, map, L.boardFill, L.boardFill === 'none' ? C.glassEdge : C.ink, lw * (L.boardFill === 'none' ? 1.5 : 1));
+  L.parts.forEach(p => {
+    if (p.s === 'coil') { [44, 36, 28, 20].forEach(r => shapeOf(Ci(80, 200, r), map, null, C.copper, lw * 2.2)); return; }
+    if (p.s === 'nfc') { g.setLineDash([lw * 6, lw * 3]); shapeOf(R(22, 140, 116, 122), map, null, C.copper, lw * 1.6); g.setLineDash([]); return; }
+    (Array.isArray(p.s) ? p.s : p.s ? [p.s] : []).forEach(s => shapeOf(s, map, p.f, C.ink, lw * .8));
+  });
+  g.restore();
+}
+function anchorOf(p) { if (p.m) return p.m; const s = Array.isArray(p.s) ? p.s[0] : p.s; return s.t === 'c' ? [s.u, s.v] : [s.u + s.w / 2, s.v + s.h / 2]; }
+
+// ---------- text ----------
+const segW = new Intl.Segmenter('th', { granularity: 'word' }), segG = new Intl.Segmenter('th', { granularity: 'grapheme' });
+function wrap(text, maxW) {
+  if (text.includes('\n')) return text.split('\n').flatMap(p => wrap(p, maxW));
+  const out = []; let cur = '';
+  for (const { segment } of segW.segment(text)) {
+    if (g.measureText(cur + segment).width > maxW && cur.trim()) { out.push(cur.trim()); cur = segment.trimStart(); } else cur += segment;
+  }
+  if (cur.trim()) out.push(cur.trim()); return out;
+}
+function pill(text, x, y, k, opt = {}) {
+  if (k <= 0) return;
+  const size = opt.size || 36; g.font = `700 ${size}px ${FONT}`;
+  const w = g.measureText(text).width + 36, h = size * 1.55;
+  g.save(); g.translate(x, y); const sc = back(k); g.scale(sc, sc); g.globalAlpha = clamp(k * 3);
+  g.fillStyle = opt.fill || C.card; g.strokeStyle = opt.stroke || C.ink; g.lineWidth = 4;
+  g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, h / 2); g.fill(); g.stroke();
+  g.fillStyle = opt.color || C.ink; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, 2);
+  g.restore();
+  return w;
+}
+
+// ---------- timeline ----------
+const T_EXPLODE = TL.explode, T_CLOSE = TL.close, SEGS = TL.segments;
+// caption = [shown from, shown until, text, voice start, voice length]
+const CAPS = SEGS.map(s => [s.start + (s === SEGS[0] ? .2 : 0), s.end, s.cap, s.voice, s.vdur]);
+
+function drawCaption(t) {
+  const c = CAPS.find(c => t >= c[0] && t < c[1]); if (!c) return;
+  const k = seg(t, c[0], c[0] + .25), bx = 70, by = 1500, bw = 940, bh = 270;
+  g.save(); g.globalAlpha = k; g.translate(0, (1 - easeOut(k)) * 24);
+  g.fillStyle = C.ink; g.beginPath(); g.roundRect(bx + 8, by + 10, bw, bh, 26); g.fill();
+  g.fillStyle = C.card; g.strokeStyle = C.ink; g.lineWidth = 6; g.beginPath(); g.roundRect(bx, by, bw, bh, 26); g.fill(); g.stroke();
+  g.font = `700 50px ${FONT}`; g.fillStyle = C.ink; g.textBaseline = 'middle'; g.textAlign = 'left';
+  const lines = wrap(c[2], bw - 80), lh = 70, top = by + bh / 2 - (lines.length - 1) * lh / 2;
+  // reveal the words in step with the voice
+  const total = lines.reduce((n, l) => n + [...segG.segment(l)].length, 0);
+  let budget = Math.ceil(total * clamp((t - c[3] + .15) / (c[4] * .92)));
+  lines.forEach((l, i) => {
+    const gs = [...segG.segment(l)].map(s => s.segment), shown = gs.slice(0, Math.max(0, budget)).join(''); budget -= gs.length;
+    g.fillText(shown, W / 2 - g.measureText(l).width / 2, top + i * lh);
+  });
+  g.restore();
+}
+
+// exploded stack (isometric). ex: 0 = closed, 1 = fully exploded
+function drawStack(t, ex, active, activeK) {
+  const S = lerp(1.55, .95, ex), gap = lerp(7, 46, ex);
+  const ox = lerp(540 - S * 205, 80, ex), oy = lerp(800 - (9 * gap + S * 67) / 2, 300, ex);
+  // corner guides
+  if (ex > .05) {
+    g.save(); g.globalAlpha = ex; g.strokeStyle = C.line; g.setLineDash([6, 8]); g.lineWidth = 2;
+    [[0, 0], [0, PL], [PW, PL]].forEach(([u, v]) => { g.beginPath(); g.moveTo(ox + S * (v + u * .5), oy + S * u * .42); g.lineTo(ox + S * (v + u * .5), oy + 9 * gap + S * u * .42); g.stroke(); });
+    g.restore();
+  }
+  for (let i = LAYERS.length - 1; i >= 0; i--) {
+    const isA = i === active, push = isA ? easeOut(activeK) * 34 : 0;
+    const map = (u, v) => [ox + push + S * (v + u * .5), oy + i * gap + S * u * .42];
+    const dim = active >= 0 && !isA ? lerp(1, .38, clamp(activeK * 2)) : 1;
+    drawLayer(LAYERS[i], map, S * 1.1, dim);
+    if (isA && activeK > 0) {
+      g.save(); g.globalAlpha = clamp(activeK * 2); shapeOf(R(0, 0, PW, PL), map, null, C.copper, 5); g.restore();
+    }
+  }
+}
+
+// big flat view of one layer with labels
+function drawDetail(L, i, k, t0, t, per) {
+  if (k <= 0) return;
+  const cx = 540, cy = 1130, S = 2.3, x0 = cx - S * PL / 2, y0 = cy - S * PW / 2;
+  g.save(); g.globalAlpha = clamp(k * 2);
+  // card
+  g.fillStyle = C.ink; g.beginPath(); g.roundRect(68, 800, 944, 650, 26); g.fill();
+  g.fillStyle = C.card; g.strokeStyle = C.ink; g.lineWidth = 5; g.beginPath(); g.roundRect(60, 790, 944, 650, 26); g.fill(); g.stroke();
+  const sc = lerp(.85, 1, easeOut(k));
+  g.translate(cx, cy); g.scale(sc, sc); g.translate(-cx, -cy);
+  const map = (u, v) => [x0 + v * S, y0 + u * S];
+  drawLayer(L, map, 2.6, 1);
+  // labels: split into a row above and a row below, then spread evenly so they never overlap
+  const parts = L.parts.map(p => { const a = anchorOf(p), m = map(a[0], a[1]); return { p, ax: m[0], ay: m[1] }; });
+  let up = parts.filter(q => q.ay <= cy).sort((a, b) => a.ax - b.ax), dn = parts.filter(q => q.ay > cy).sort((a, b) => a.ax - b.ax);
+  while (up.length - dn.length > 1) { up.sort((a, b) => b.ay - a.ay); dn.push(up.shift()); }
+  while (dn.length - up.length > 1) { dn.sort((a, b) => a.ay - b.ay); up.push(dn.shift()); }
+  [[up, 860], [dn, 1395]].forEach(([row, y]) => {
+    row.sort((a, b) => a.ax - b.ax);
+    const slot = 884 / Math.max(row.length, 1);
+    row.forEach((q, j) => { q.lx = row.length === 1 ? clamp(q.ax, 240, 840) : 90 + slot * (j + .5); q.ly = y; q.side = y < cy ? 'up' : 'dn'; });
+  });
+  parts.sort((a, b) => a.ax - b.ax).forEach((q, j) => q.order = j);
+  parts.forEach(q => {
+    const step = Math.min(.45, (per - 1.4) / L.parts.length), kk = seg(t, t0 + .45 + q.order * step, t0 + .75 + q.order * step);
+    if (kk <= 0) return;
+    g.save(); g.globalAlpha = clamp(kk * 3);
+    g.strokeStyle = C.copper; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(q.lx, q.ly + (q.side === 'up' ? 26 : -26)); g.lineTo(q.ax, q.ay); g.stroke();
+    g.fillStyle = C.copper; g.beginPath(); g.arc(q.ax, q.ay, 9, 0, 7); g.fill();
+    g.strokeStyle = C.card; g.lineWidth = 3; g.stroke();
+    g.restore();
+    pill(q.p.n, q.lx, q.ly, kk, { size: 30 });
+  });
+  g.restore();
+}
+
+function frame(t) {
+  g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = C.grid; g.lineWidth = 2; g.beginPath();
+  for (let x = 0; x <= W; x += 60) { g.moveTo(x, 0); g.lineTo(x, H); }
+  for (let y = 0; y <= H; y += 60) { g.moveTo(0, y); g.lineTo(W, y); }
+  g.stroke();
+  // title
+  g.font = `700 74px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = C.ink;
+  g.fillText('แกะมือถือ', W / 2, 115); g.fillStyle = C.copper; g.fillText('ดูข้างในทีละชั้น', W / 2, 205);
+
+  const ex = easeInOut(seg(t, ...T_EXPLODE)) * (1 - easeInOut(seg(t, ...T_CLOSE)));
+  let li = -1; for (let j = 1; j <= LAYERS.length; j++) if (t >= SEGS[j].start && t < SEGS[j].end) li = j - 1;
+  const t0 = li >= 0 ? SEGS[li + 1].start : 0, PER = li >= 0 ? SEGS[li + 1].end - t0 : 1;
+  const ak = li >= 0 ? seg(t, t0, t0 + .35) : 0;
+  drawStack(t, ex, li, ak);
+
+  if (li >= 0) {
+    // layer counter + name beside the stack
+    const k = seg(t, t0, t0 + .3);
+    g.save(); g.globalAlpha = k; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    g.font = `700 36px ${FONT}`; g.fillStyle = C.muted; g.fillText(`ชั้นที่ ${li + 1} / ${LAYERS.length}`, 600, 420);
+    g.font = `700 64px ${FONT}`; g.fillStyle = C.ink;
+    const nl = wrap(LAYERS[li].name, 430); nl.forEach((l, j) => g.fillText(l, 600, 500 + j * 74));
+    g.font = `700 32px ${FONT}`; g.fillStyle = C.copper;
+    g.fillText(`${LAYERS[li].parts.length} ชิ้นส่วน`, 600, 500 + (nl.length - 1) * 74 + 56);
+    g.restore();
+    const outK = 1 - seg(t, t0 + PER - .2, t0 + PER);
+    drawDetail(LAYERS[li], li, seg(t, t0 + .05, t0 + .4) * outK, t0, t, PER);
+    if (li === LAYERS.length - 1 && t > T_CLOSE[0] - .3) {}
+  }
+  // ending
+  const te = T_CLOSE[1];
+  if (t > te) {
+    pill('10 ชั้น', 330, 1260, seg(t, te + .1, te + .4), { size: 64, fill: C.ink, color: C.card });
+    pill('32 ชิ้นส่วน', 720, 1260, seg(t, te + .4, te + .7), { size: 64, fill: C.copper, color: C.card });
+  }
+  drawCaption(t);
+  // progress
+  g.fillStyle = C.grid; g.beginPath(); g.roundRect(70, 1830, 940, 16, 8); g.fill();
+  g.fillStyle = C.copper; g.beginPath(); g.roundRect(70, 1830, 940 * clamp(t / DUR), 16, 8); g.fill();
+}
+
+window.DUR = DUR;
+window.renderAt = t => { frame(t); return true; };
+window.ready = document.fonts.load(`700 40px Kanit`, 'มือถือA1').then(() => document.fonts.load(`500 40px Kanit`, 'มือถือA1')).then(() => { frame(0); return true; });
+if (!location.search.includes('render')) { const s = performance.now(); window.ready.then(() => { (function loop() { frame(((performance.now() - s) / 1000) % DUR); requestAnimationFrame(loop); })(); }); }
+</script>
+</body>
+</html>

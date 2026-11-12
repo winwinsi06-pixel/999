@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>Pirate Eye Patch Clip</title>
+<style>
+@font-face { font-family: Kanit; font-weight: 500; src: url(fonts/kanit-500-thai.woff2) format("woff2"); unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC; }
+@font-face { font-family: Kanit; font-weight: 500; src: url(fonts/kanit-500-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2013-2026; }
+@font-face { font-family: Kanit; font-weight: 700; src: url(fonts/kanit-700-thai.woff2) format("woff2"); unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC; }
+@font-face { font-family: Kanit; font-weight: 700; src: url(fonts/kanit-700-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2013-2026; }
+html, body { margin: 0; background: #222; }
+canvas { display: block; width: 360px; height: 640px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// Short vertical clip (1080x1920, 40 s). renderAt(t) draws the frame at time t (seconds).
+const W = 1080, H = 1920, DUR = 42;
+const C = { paper: '#eef2f8', grid: '#d7e0ec', panel: '#ffffff', ink: '#1b1e24', red: '#d1382c',
+  sun: '#e3a21a', night: '#0f141d', hold: '#2e3a4d', chalk: '#e9edf2', sky: '#dcefff' };
+const FONT = 'Kanit, Loma, sans-serif';
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+const BOX = { x: 60, y: 300, w: 960, h: 1030 };
+
+// ---------- helpers ----------
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const back = k => { const c1 = 1.9, c3 = c1 + 1; return k <= 0 ? 0 : 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+function hash(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+let BUCKET = 0, JIT = 0.9;
+function j(x, y, k = 0) { return [x + (hash(x * 3.1 + y * 7.7 + BUCKET * 13 + k) - .5) * JIT, y + (hash(x * 5.3 - y * 2.9 + BUCKET * 17 + k) - .5) * JIT]; }
+function line(pts) { g.beginPath(); pts.forEach((p, i) => { const q = j(p[0], p[1], i); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.stroke(); }
+function circle(cx, cy, r, fill) {
+  g.beginPath();
+  for (let i = 0; i <= 24; i++) { const a = i / 24 * Math.PI * 2, rr = r + (hash(i + BUCKET * 31 + cx) - .5) * JIT * .8; const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+  g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } g.stroke();
+}
+
+// ---------- stick figure (feet at x,y; units ~ 1 = s px) ----------
+function fig(o) {
+  const s = o.s || 4, col = o.col || C.ink;
+  g.save(); g.globalAlpha = o.alpha ?? 1;
+  g.translate(o.x, o.y); g.rotate(o.rot || 0); g.scale((o.flip ? -1 : 1) * s, s);
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 3; g.lineCap = 'round'; g.lineJoin = 'round';
+  const bob = o.bob || 0; g.translate(0, bob);
+  // legs
+  if (o.walk != null) { const w = Math.sin(o.walk) * 9, l = Math.max(0, Math.cos(o.walk)) * 4; line([[-6 - w, -l], [0, -30], [6 + w, -Math.max(0, -Math.cos(o.walk)) * 4]]); }
+  else line([[-11, 0], [0, -30], [11, 0]]);
+  line([[0, -30], [0, -62]]);
+  // arms: hands relative to shoulder (0,-56)
+  const A = { down: [-16, -34, 16, -34], up: [-20, -80, 20, -80], sword: [-16, -36, 20, -46], wave: [-16, -34, 22, -84], reach: [-16, -36, 9, -84],
+    lift: [-16, -36, 7, -96], tip: [-16, -36, 10, -104], shrug: [-24, -66, 24, -66] }[o.arms || 'down'].slice();
+  if (o.arms === 'wave') A[2] += Math.sin((o.t || 0) * 12) * 6;
+  if (o.arms === 'up' && o.flail) { A[0] += Math.sin(o.flail) * 7; A[2] += Math.cos(o.flail * 1.3) * 7; }
+  line([[A[0], A[1]], [0, -56], [A[2], A[3]]]);
+  if (o.arms === 'sword') { line([[16, -42], [46, -78]]); line([[12, -52], [26, -38]]); }
+  // head
+  g.save(); g.translate(0, -77);
+  circle(0, 0, 15, o.headFill || null);
+  const px = o.patch, py = o.patchY || 0;
+  [-5, 5].forEach(ex => {
+    const covered = px != null && Math.abs(px - ex) < 3 && py > -3;
+    if (covered && !o.under) return;
+    const e = o.eyes || 'dot';
+    if (e === 'x') { line([[ex - 2.6, -5.6], [ex + 2.6, -0.4]]); line([[ex + 2.6, -5.6], [ex - 2.6, -0.4]]); }
+    else if (e === 'big') { g.lineWidth = 2; circle(ex, -3, 4); g.beginPath(); g.arc(ex + .6, -3, 1.6, 0, 7); g.fill(); g.lineWidth = 3; }
+    else { g.beginPath(); g.arc(ex, -3, 2, 0, 7); g.fill(); }
+  });
+  if (o.under != null) { g.beginPath(); g.ellipse(o.under, -3, 5.2, 4.6, 0, 0, 7); g.fill(); }
+  if (px != null) {
+    g.lineWidth = 2; line([[-15, -6 + py * .4], [15, -9 + py * .4]]);
+    g.beginPath(); g.ellipse(px, -3 + py, 5.4, 4.8, 0, 0, 7); g.fill(); g.lineWidth = 3;
+  }
+  const m = o.mouth || 'smile';
+  if (m === 'smile') line([[-5, 6], [0, 9.5], [5, 6]]);
+  else if (m === 'grin') { g.beginPath(); g.moveTo(-6, 5); g.quadraticCurveTo(0, 13, 6, 5); g.closePath(); g.fill(); }
+  else if (m === 'o') { g.lineWidth = 2; circle(0, 8, 2.6); g.lineWidth = 3; }
+  else if (m === 'scream') { g.beginPath(); g.ellipse(0, 8, 4, 5.5, 0, 0, 7); g.fill(); }
+  else if (m === 'flat') line([[-4, 7], [4, 7]]);
+  else if (m === 'awk') { g.lineWidth = 2; line([[-6, 7], [-3, 5.5], [0, 7], [3, 5.5], [6, 7]]); g.lineWidth = 3; }
+  if (o.hat) {
+    g.save(); g.translate(0, o.hatY || 0); g.rotate(o.hatRot || 0);
+    g.beginPath(); g.moveTo(-22, -11); g.quadraticCurveTo(0, -20, 22, -11); g.lineTo(13, -26); g.quadraticCurveTo(0, -34, -13, -26); g.closePath(); g.fill();
+    g.fillStyle = o.col === C.chalk ? C.night : C.panel; g.beginPath(); g.arc(0, -20, 3, 0, 7); g.fill();
+    g.restore();
+  }
+  g.restore(); g.restore();
+}
+
+// ---------- text ----------
+const segW = new Intl.Segmenter('th', { granularity: 'word' });
+const segG = new Intl.Segmenter('th', { granularity: 'grapheme' });
+function wrap(text, maxW) {
+  if (text.includes('\n')) return text.split('\n').flatMap(p => wrap(p, maxW));
+  const out = []; let cur = '';
+  for (const { segment } of segW.segment(text)) {
+    if (segment === '\n') { out.push(cur); cur = ''; continue; }
+    if (g.measureText(cur + segment).width > maxW && cur.trim()) { out.push(cur.trim()); cur = segment.trimStart(); }
+    else cur += segment;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+function bubble(x, y, text, k, opt = {}) {
+  if (k <= 0) return;
+  const sc = back(clamp(k * 1.0)) ;
+  g.save(); g.translate(x, y); g.scale(sc, sc);
+  g.font = `700 ${opt.size || 50}px ${FONT}`;
+  const lines = wrap(text, opt.max || 420), lh = (opt.size || 50) * 1.3;
+  const w = Math.max(...lines.map(l => g.measureText(l).width)) + 56, h = lines.length * lh + 34;
+  const tx = opt.tail ?? 0;
+  g.fillStyle = opt.fill || C.panel; g.strokeStyle = opt.stroke || C.ink; g.lineWidth = 7; g.lineJoin = 'round';
+  JIT = 2.5;
+  g.beginPath();
+  const r = 26, L = -w / 2, T = -h, R = w / 2, B = 0;
+  g.moveTo(L + r, T); g.lineTo(R - r, T); g.quadraticCurveTo(R, T, R, T + r); g.lineTo(R, B - r); g.quadraticCurveTo(R, B, R - r, B);
+  g.lineTo(tx + 26, B); g.lineTo(tx + (opt.tailDx ?? 10), B + 44); g.lineTo(tx - 14, B);
+  g.lineTo(L + r, B); g.quadraticCurveTo(L, B, L, B - r); g.lineTo(L, T + r); g.quadraticCurveTo(L, T, L + r, T);
+  g.closePath(); g.fill(); g.stroke(); JIT = .9;
+  g.fillStyle = opt.color || C.ink; g.textAlign = 'center'; g.textBaseline = 'middle';
+  lines.forEach((l, i) => g.fillText(l, 0, T + 17 + lh * (i + .5)));
+  g.restore();
+}
+function pop(text, x, y, k, size, rot, color) {
+  if (k <= 0) return;
+  g.save(); g.translate(x, y); g.rotate(rot || 0); const sc = back(clamp(k)); g.scale(sc, sc);
+  g.font = `700 ${size}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = size / 7; g.strokeStyle = C.ink; g.lineJoin = 'round'; g.strokeText(text, 0, 0);
+  g.fillStyle = color || C.red; g.fillText(text, 0, 0); g.restore();
+}
+
+// ---------- captions (narration) ----------
+const CAPS = [
+  [0.4, 4.0, 'เคยสงสัยไหม...\nโจรสลัดใส่ผ้าปิดตาไปทำไม?'],
+  [7.4, 9.0, 'งั้น... ปิดไว้ทำไมล่ะ?'],
+  [9.0, 12.4, 'ลงจากดาดฟ้าที่แดดจ้า\nไปท้องเรือที่มืดตึ๊ดตื๋อ...'],
+  [12.4, 16.0, 'ตาต้องใช้เวลา 20–30 นาที\nกว่าจะชินกับความมืด'],
+  [16.0, 19.3, 'ทริคคือ: ตาข้างที่ปิดไว้\nอยู่ในความมืดมาทั้งวัน'],
+  [19.3, 24.0, 'สลับผ้าปิดตาปุ๊บ... เห็นทันที!'],
+  [24.0, 27.5, 'แต่... ศัตรูก็รู้ทริคนี้เหมือนกัน'],
+  [27.5, 30.0, '(เงียบกริบ...)'],
+  [30.0, 34.0, 'ความจริง: ไม่มีบันทึกโจรสลัด\nเล่มไหนเขียนถึงทริคนี้เลย'],
+  [34.0, 37.6, 'ส่วนใหญ่ใส่เพราะตาเสียจริงๆ...\nหรือไม่ก็ใส่เพราะเท่'],
+  [37.6, 42.0, 'MythBusters ทดลองปี 2007: ได้ผลจริง\nแต่ไม่มีหลักฐานว่าโจรสลัดใช้'],
+];
+function drawCaption(t) {
+  const c = CAPS.find(c => t >= c[0] && t < c[1]); if (!c) return;
+  const k = seg(t, c[0], c[0] + .25);
+  const bx = 70, by = 1400, bw = 940, bh = 330;
+  g.save(); g.globalAlpha = k; g.translate(0, (1 - easeOut(k)) * 30);
+  g.fillStyle = C.ink; g.beginPath(); g.roundRect(bx + 10, by + 12, bw, bh, 28); g.fill();
+  g.fillStyle = C.panel; g.strokeStyle = C.ink; g.lineWidth = 7; g.beginPath(); g.roundRect(bx, by, bw, bh, 28); g.fill(); g.stroke();
+  g.font = `700 64px ${FONT}`; g.fillStyle = C.ink; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const lines = wrap(c[2], bw - 90);
+  // typewriter by grapheme
+  let budget = Math.floor((t - c[0]) * 34);
+  const lh = 86, top = by + bh / 2 - (lines.length - 1) * lh / 2;
+  lines.forEach((l, i) => {
+    const gs = [...segG.segment(l)].map(s => s.segment);
+    const shown = gs.slice(0, Math.max(0, budget)).join(''); budget -= gs.length;
+    const fullW = g.measureText(l).width;
+    g.textAlign = 'left'; g.fillText(shown, W / 2 - fullW / 2, top + i * lh);
+  });
+  g.restore();
+}
+
+// ---------- scene ----------
+function sunAt(x, y, t) {
+  g.save(); g.translate(x, y); g.rotate(t * .6);
+  g.strokeStyle = C.sun; g.lineWidth = 12; g.lineCap = 'round';
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; line([[Math.cos(a) * 95, Math.sin(a) * 95], [Math.cos(a) * 130, Math.sin(a) * 130]]); }
+  g.restore(); g.strokeStyle = C.ink; g.lineWidth = 9; JIT = 3; circle(x, y, 70, C.sun); JIT = .9;
+}
+function barrel(x, y, col) {
+  g.strokeStyle = col; g.lineWidth = 10; JIT = 3;
+  g.beginPath(); g.roundRect(x, y - 190, 130, 190, 40); g.stroke();
+  line([[x + 6, y - 140], [x + 124, y - 140]]); line([[x + 6, y - 50], [x + 124, y - 50]]); JIT = .9;
+}
+function stars(cx, cy, t, col) {
+  g.fillStyle = col; g.font = `700 54px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let i = 0; i < 3; i++) { const a = t * 6 + i * 2.1; g.fillText('✶', cx + Math.cos(a) * 80, cy + Math.sin(a) * 26); }
+}
+
+function scene(t) {
+  const { w, h } = BOX, GY = 900;
+  // ===== A + B: paper (0–9) =====
+  if (t < 9) {
+    g.fillStyle = C.panel; g.fillRect(0, 0, w, h);
+    g.strokeStyle = C.ink; g.lineWidth = 10; line([[60, GY], [w - 60, GY]]);
+    const px = lerp(480, 640, easeInOut(seg(t, 4, 4.7)));
+    const qa = 1 - seg(t, 4, 4.4);
+    pop('?', 190, 260, seg(t, .8, 1.1) * qa, 230, -.2);
+    pop('?', 790, 230, seg(t, 1.2, 1.5) * qa, 170, .2);
+    pop('?', 820, 520, seg(t, 1.6, 1.9) * qa, 110, -.1);
+    const lift = seg(t, 6.6, 6.9) * (1 - seg(t, 7.5, 7.8));
+    fig({ x: px, y: GY, s: lerp(0, 4.6, back(seg(t, 0, .5))) || .001, hat: true, patch: -5, patchY: -lift * 12,
+      eyes: lift > .5 ? 'big' : 'dot', mouth: t > 6.3 && t < 7.8 ? 'grin' : 'smile', arms: lift > 0 ? 'lift' : 'down', bob: Math.sin(t * 3) * 1.2 });
+    if (t > 3.9) {
+      const kx = lerp(-120, 250, easeOut(seg(t, 4, 5)));
+      fig({ x: kx, y: GY, s: 3.2, walk: t < 5 ? t * 12 : null, eyes: t > 6.6 ? 'big' : 'dot', mouth: t > 6.6 ? 'o' : 'smile', arms: 'down' });
+      bubble(250, 470, 'ลุงตาบอดเหรอ?', seg(t, 5.0, 5.3), { tail: -40 });
+      bubble(600, 330, 'เปล่า! ตาดีทั้งสองข้าง', seg(t, 6.2, 6.5), { tail: -60, max: 520 });
+    }
+    return;
+  }
+  // ===== C1: sunny deck, fall into hatch (9–10.6) =====
+  if (t < 10.6) {
+    g.fillStyle = C.sky; g.fillRect(0, 0, w, h);
+    sunAt(170, 190, t);
+    g.fillStyle = C.night; g.fillRect(560, GY, 220, h - GY);
+    g.strokeStyle = C.ink; g.lineWidth = 10; line([[0, GY], [560, GY]]); line([[780, GY], [w, GY]]);
+    g.strokeStyle = C.ink; line([[560, GY], [560, h]]); line([[780, GY], [780, h]]);
+    const wk = seg(t, 9.0, 9.8), fall = seg(t, 9.8, 10.5);
+    fig({ x: lerp(260, 670, wk), y: GY + fall * fall * 900, s: 4.6, hat: true, patch: 5, walk: wk < 1 ? t * 12 : null,
+      arms: fall > 0 ? 'up' : 'down', flail: t * 20, mouth: fall > 0 ? 'scream' : 'smile', eyes: fall > 0 ? 'big' : 'dot', rot: fall * .5 });
+    pop('ว้าย!', 840, 420, seg(t, 9.85, 10.05), 110, .15);
+    return;
+  }
+  // ===== dark hold (10.6–30) =====
+  g.fillStyle = C.night; g.fillRect(0, 0, w, h);
+  // hold becomes visible after the patch flip
+  const vis = seg(t, 18.9, 19.4);
+  if (vis > 0) {
+    g.save(); g.globalAlpha = vis; g.fillStyle = C.hold; g.fillRect(0, 0, w, h);
+    // lantern
+    g.strokeStyle = C.chalk; g.lineWidth = 8; line([[480, 0], [480, 70]]);
+    g.fillStyle = 'rgba(227,162,26,.35)'; g.beginPath(); g.arc(480, 120, 70, 0, 7); g.fill();
+    g.lineWidth = 8; g.beginPath(); g.roundRect(452, 70, 56, 84, 10); g.stroke();
+    barrel(60, GY, C.chalk); barrel(150, GY, C.chalk);
+    g.restore();
+  }
+  g.strokeStyle = C.chalk; g.lineWidth = 8; g.globalAlpha = .5 + vis * .5; line([[0, GY], [w, GY]]); g.globalAlpha = 1;
+
+  let px, mouth = 'o', eyes = 'x', arms = 'up', alpha = .55, patch = 5;
+  if (t < 16) {
+    px = 480 + Math.sin((t - 10.6) * 1.6) * 230;
+    // bonks
+    [12.0, 13.2, 14.4].forEach((b, i) => {
+      const k = seg(t, b, b + .15) * (1 - seg(t, b + 1.0, b + 1.2));
+      pop('โป๊ก!', [250, 760, 420][i], [300, 360, 220][i], k, 120, [-.2, .2, -.1][i]);
+    });
+    if (t > 12) stars(px, GY - 470, t, C.sun);
+    // clock
+    const ck = seg(t, 12.4, 12.7);
+    if (ck > 0) {
+      g.save(); g.globalAlpha = ck; g.strokeStyle = C.chalk; g.lineWidth = 9; JIT = 2; circle(850, 120, 62);
+      const a = t * 9; line([[850, 120], [850 + Math.cos(a) * 44, 120 + Math.sin(a) * 44]]); line([[850, 120], [850 + Math.cos(a / 12) * 28, 120 + Math.sin(a / 12) * 28]]); JIT = .9;
+      g.font = `700 48px ${FONT}`; g.fillStyle = C.chalk; g.textAlign = 'right'; g.textBaseline = 'middle'; g.fillText('20–30 นาที', 760, 120); g.restore();
+    }
+  } else {
+    px = lerp(480 + Math.sin((16 - 10.6) * 1.6) * 230, 330, easeInOut(seg(t, 16, 16.5)));
+    arms = 'down'; mouth = 'flat';
+    if (t > 17.6 && t < 19) arms = 'reach';
+    patch = lerp(5, -5, easeInOut(seg(t, 18.0, 18.6)));
+    if (t > 18.6) { eyes = 'big'; alpha = 1; }
+    if (t > 19.4) mouth = 'scream';
+    if (t > 21) { mouth = 'grin'; arms = 'sword'; }
+    if (t > 25.3) { mouth = 'scream'; arms = 'up'; }
+    if (t > 27.5) { mouth = 'awk'; arms = t > 28.4 ? 'wave' : 'down'; }
+  }
+  const shake = t < 16 ? 0 : 0;
+  fig({ x: px + shake, y: GY, s: 4.6, hat: true, patch, col: C.chalk, eyes, mouth, arms, alpha, flail: t * 9, t,
+    walk: t < 16 ? t * 8 : null });
+  // light bulb idea
+  const bk = seg(t, 16.3, 16.5) * (1 - seg(t, 18.8, 19.0));
+  if (bk > 0) {
+    g.save(); g.translate(px, GY - 620); const sc = back(bk); g.scale(sc, sc);
+    g.fillStyle = C.sun; g.strokeStyle = C.chalk; g.lineWidth = 8; JIT = 2; circle(0, 0, 50, C.sun);
+    g.beginPath(); g.roundRect(-24, 46, 48, 34, 6); g.stroke();
+    for (let i = 0; i < 7; i++) { const a = -Math.PI + i / 6 * Math.PI; line([[Math.cos(a) * 72, Math.sin(a) * 72], [Math.cos(a) * 100, Math.sin(a) * 100]]); }
+    JIT = .9; g.restore();
+  }
+  // enemy pirate: always there, only visible once our pirate can see
+  if (vis > 0) {
+    const flipK = easeInOut(seg(t, 24.6, 25.2));
+    let em = 'smile', ea = 'sword', ee = 'x';
+    if (t > 25.2) { ee = 'big'; em = 'scream'; ea = 'up'; }
+    if (t < 24.6 && t > 24.3) ea = 'reach'; if (t >= 24.6 && t < 25.2) ea = 'reach';
+    if (t > 27.5) { em = 'awk'; ea = t > 28.6 ? 'wave' : 'down'; }
+    fig({ x: 720, y: GY, s: 4.6, flip: true, hat: true, patch: lerp(5, -5, flipK), col: C.chalk, eyes: ee, mouth: em, arms: ea, alpha: vis, flail: t * 9 + 1, t: t + .3 });
+    bubble(330, 300, 'อ๊ากก!', seg(t, 19.4, 19.6) * (1 - seg(t, 20.8, 21)), { tail: 10, size: 64 });
+    pop('ฮึๆๆ', 360, 280, seg(t, 21.2, 21.4) * (1 - seg(t, 23.8, 24)), 80, -.1, C.sun);
+    bubble(720, 300, 'อ๊ากก!', seg(t, 25.4, 25.6) * (1 - seg(t, 27.3, 27.5)), { tail: -10, size: 64 });
+    bubble(330, 300, 'อ๊ากก!', seg(t, 25.7, 25.9) * (1 - seg(t, 27.3, 27.5)), { tail: 10, size: 64 });
+    if (t > 27.5) {
+      pop('...', 525, 260, seg(t, 27.7, 28), 120, 0, C.chalk);
+      g.globalAlpha = .7; pop('จิ๊บ จิ๊บ', 520 + Math.sin(t * 3) * 30, 975, seg(t, 28.2, 28.5), 54, 0, C.chalk); g.globalAlpha = 1;
+    }
+  }
+}
+
+function scenePaper(t) {
+  const { w, h } = BOX, GY = 900;
+  g.fillStyle = C.panel; g.fillRect(0, 0, w, h);
+  g.strokeStyle = C.ink; g.lineWidth = 10; line([[60, GY], [w - 60, GY]]);
+  if (t < 38) {
+    // stamp
+    const sk = seg(t, 30.5, 30.75);
+    if (sk > 0) {
+      g.save(); g.translate(540, 170); g.rotate(-.12); const sc = lerp(2.2, 1, easeOut(sk)); g.scale(sc, sc); g.globalAlpha = sk;
+      g.strokeStyle = C.red; g.lineWidth = 12; JIT = 3; g.beginPath(); g.roundRect(-290, -70, 580, 140, 14); g.stroke(); JIT = .9;
+      g.font = `700 86px ${FONT}`; g.fillStyle = C.red; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('ไม่มีหลักฐาน!', 0, 6);
+      g.restore();
+    }
+    // logbook
+    const bk = seg(t, 31.3, 31.6);
+    if (bk > 0) {
+      g.save(); g.translate(170, 780); const sc = back(bk); g.scale(sc, sc);
+      g.strokeStyle = C.ink; g.fillStyle = C.panel; g.lineWidth = 9; JIT = 3;
+      g.beginPath(); g.moveTo(-130, -60); g.quadraticCurveTo(-65, -85, 0, -60); g.lineTo(0, 70); g.quadraticCurveTo(-65, 45, -130, 70); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(0, -60); g.quadraticCurveTo(65, -85, 130, -60); g.lineTo(130, 70); g.quadraticCurveTo(65, 45, 0, 70); g.closePath(); g.fill(); g.stroke();
+      line([[-105, -25], [-25, -38]]); line([[-105, 5], [-25, -8]]); JIT = .9;
+      g.font = `700 110px ${FONT}`; g.fillStyle = C.red; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('?', 65, 10);
+      g.restore();
+    }
+    // the double-patch gag
+    const lift = seg(t, 35.0, 35.4);
+    const shrug = t > 31 && t < 34;
+    fig({ x: 600, y: GY, s: 4.6, hat: true, patch: -5, patchY: -lift * 13, under: lift > .3 ? -5 : null,
+      eyes: 'dot', mouth: lift > .9 ? 'grin' : (shrug ? 'awk' : 'smile'), arms: lift > 0 ? 'lift' : (shrug ? 'shrug' : 'down'), bob: Math.sin(t * 3) * 1.2 });
+    if (t > 35.8) {
+      pop('เท่!', 840, 300, seg(t, 35.8, 36.0), 120, .15, C.sun);
+      g.fillStyle = C.sun; g.font = `700 70px ${FONT}`; g.textAlign = 'center';
+      [[400, 330], [800, 520], [430, 560]].forEach((p, i) => { g.globalAlpha = .5 + .5 * Math.sin(t * 8 + i * 2); g.fillText('✦', p[0], p[1]); });
+      g.globalAlpha = 1;
+    }
+  } else {
+    // end card: tip of the hat
+    const tip = easeInOut(seg(t, 38.4, 38.8)) * (1 - easeInOut(seg(t, 40.2, 40.6)));
+    fig({ x: 540, y: GY, s: 4.6, hat: true, hatY: -tip * 14, hatRot: -tip * .3, patch: -5, mouth: 'grin', arms: tip > .05 ? 'tip' : 'down' });
+    pop('จบ', 540, 210, seg(t, 38.0, 38.3), 190, -.05);
+  }
+}
+
+function frame(t) {
+  BUCKET = Math.floor(t * 8); JIT = .9;
+  // page
+  g.fillStyle = C.paper; g.fillRect(0, 0, W, H);
+  g.strokeStyle = C.grid; g.lineWidth = 2; g.beginPath();
+  for (let x = 0; x <= W; x += 60) { g.moveTo(x, 0); g.lineTo(x, H); }
+  for (let y = 0; y <= H; y += 60) { g.moveTo(0, y); g.lineTo(W, y); }
+  g.stroke();
+  // title
+  g.font = `700 76px ${FONT}`; g.fillStyle = C.ink; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('ทำไมโจรสลัด', W / 2, 120); g.fillStyle = C.red; g.fillText('ต้องใส่ผ้าปิดตา?', W / 2, 214);
+  // shake on bonks and the stamp
+  let sx = 0, sy = 0;
+  [12.0, 13.2, 14.4, 30.6].forEach(b => { const k = 1 - seg(t, b, b + .3); if (t >= b && k > 0) { sx += Math.sin(t * 90) * 18 * k; sy += Math.cos(t * 70) * 12 * k; } });
+  // panel
+  const { x, y, w, h } = BOX;
+  g.fillStyle = C.ink; g.beginPath(); g.roundRect(x + 14, y + 16, w, h, 22); g.fill();
+  g.save(); g.beginPath(); g.roundRect(x, y, w, h, 22); g.clip(); g.translate(x + sx, y + sy);
+  if (t < 30) scene(t); else scenePaper(t);
+  g.restore();
+  g.strokeStyle = C.ink; g.lineWidth = 9; g.beginPath(); g.roundRect(x, y, w, h, 22); g.stroke();
+  drawCaption(t);
+  // progress bar
+  g.fillStyle = C.grid; g.beginPath(); g.roundRect(70, 1820, 940, 18, 9); g.fill();
+  g.fillStyle = C.red; g.beginPath(); g.roundRect(70, 1820, 940 * clamp(t / DUR), 18, 9); g.fill();
+}
+
+window.DUR = DUR;
+window.renderAt = t => { frame(t); return true; };
+window.ready = document.fonts.load(`700 40px Kanit`, 'ทำไมA1').then(() => document.fonts.load(`500 40px Kanit`, 'ทำไมA1')).then(() => { frame(0); return true; });
+// live preview when opened in a browser
+if (!location.search.includes('render')) { let s = performance.now(); window.ready.then(() => { (function loop() { frame(((performance.now() - s) / 1000) % DUR); requestAnimationFrame(loop); })(); }); }
+</script>
+</body>
+</html>
