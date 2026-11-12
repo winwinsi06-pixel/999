@@ -14,9 +14,11 @@ canvas { display: block; width: 360px; height: 640px; }
 </head>
 <body>
 <canvas id="c" width="1080" height="1920"></canvas>
+<script src="phone-clip-timeline.js"></script>
 <script>
-// Vertical teardown clip (1080x1920, 45 s). renderAt(t) draws the frame at time t (seconds).
-const W = 1080, H = 1920, DUR = 45;
+// Vertical teardown clip (1080x1920). Timing comes from the voiceover (phone-clip-timeline.js, made by build-voice.py).
+// renderAt(t) draws the frame at time t (seconds).
+const W = 1080, H = 1920, DUR = TL.dur;
 const C = { bg: '#eef1f4', grid: '#dfe5eb', card: '#ffffff', ink: '#16202a', muted: '#5b6875', copper: '#c2662b',
   glass: 'rgba(120,170,210,.30)', glassEdge: '#5d8db3', slab: '#dde3e9', metal: '#9aa6b1', board: '#2f6b4f',
   chip: '#1f2830', batt: '#7aa36b', part: '#7d8a97', lens: '#0d1318', line: '#c3ccd5' };
@@ -127,9 +129,9 @@ function pill(text, x, y, k, opt = {}) {
 }
 
 // ---------- timeline ----------
-const T_EXPLODE = [3.0, 5.2], T_LAYERS = 6.0, PER = 3.4, T_CLOSE = [40.2, 42.0];
-const CAPS = [[0.3, 6.0, 'ข้างในมือถือ 1 เครื่อง มีอะไรบ้าง?\nมาแกะดูทีละชั้นกัน'], [40.2, 45, 'มือถือ 1 เครื่อง = 10 ชั้น 32 ชิ้นส่วน\n(แต่ละรุ่นวางชิ้นส่วนต่างกันเล็กน้อย)']];
-LAYERS.forEach((L, i) => CAPS.push([T_LAYERS + i * PER, T_LAYERS + (i + 1) * PER, L.d]));
+const T_EXPLODE = TL.explode, T_CLOSE = TL.close, SEGS = TL.segments;
+// caption = [shown from, shown until, text, voice start, voice length]
+const CAPS = SEGS.map(s => [s.start + (s === SEGS[0] ? .2 : 0), s.end, s.cap, s.voice, s.vdur]);
 
 function drawCaption(t) {
   const c = CAPS.find(c => t >= c[0] && t < c[1]); if (!c) return;
@@ -137,9 +139,11 @@ function drawCaption(t) {
   g.save(); g.globalAlpha = k; g.translate(0, (1 - easeOut(k)) * 24);
   g.fillStyle = C.ink; g.beginPath(); g.roundRect(bx + 8, by + 10, bw, bh, 26); g.fill();
   g.fillStyle = C.card; g.strokeStyle = C.ink; g.lineWidth = 6; g.beginPath(); g.roundRect(bx, by, bw, bh, 26); g.fill(); g.stroke();
-  g.font = `700 56px ${FONT}`; g.fillStyle = C.ink; g.textBaseline = 'middle'; g.textAlign = 'left';
-  const lines = wrap(c[2], bw - 90), lh = 76, top = by + bh / 2 - (lines.length - 1) * lh / 2;
-  let budget = Math.floor((t - c[0]) * 40);
+  g.font = `700 50px ${FONT}`; g.fillStyle = C.ink; g.textBaseline = 'middle'; g.textAlign = 'left';
+  const lines = wrap(c[2], bw - 80), lh = 70, top = by + bh / 2 - (lines.length - 1) * lh / 2;
+  // reveal the words in step with the voice
+  const total = lines.reduce((n, l) => n + [...segG.segment(l)].length, 0);
+  let budget = Math.ceil(total * clamp((t - c[3] + .15) / (c[4] * .92)));
   lines.forEach((l, i) => {
     const gs = [...segG.segment(l)].map(s => s.segment), shown = gs.slice(0, Math.max(0, budget)).join(''); budget -= gs.length;
     g.fillText(shown, W / 2 - g.measureText(l).width / 2, top + i * lh);
@@ -169,7 +173,7 @@ function drawStack(t, ex, active, activeK) {
 }
 
 // big flat view of one layer with labels
-function drawDetail(L, i, k, t0, t) {
+function drawDetail(L, i, k, t0, t, per) {
   if (k <= 0) return;
   const cx = 540, cy = 1130, S = 2.3, x0 = cx - S * PL / 2, y0 = cy - S * PW / 2;
   g.save(); g.globalAlpha = clamp(k * 2);
@@ -192,7 +196,7 @@ function drawDetail(L, i, k, t0, t) {
   });
   parts.sort((a, b) => a.ax - b.ax).forEach((q, j) => q.order = j);
   parts.forEach(q => {
-    const kk = seg(t, t0 + .45 + q.order * .2, t0 + .75 + q.order * .2);
+    const step = Math.min(.45, (per - 1.4) / L.parts.length), kk = seg(t, t0 + .45 + q.order * step, t0 + .75 + q.order * step);
     if (kk <= 0) return;
     g.save(); g.globalAlpha = clamp(kk * 3);
     g.strokeStyle = C.copper; g.lineWidth = 4;
@@ -216,8 +220,8 @@ function frame(t) {
   g.fillText('แกะมือถือ', W / 2, 115); g.fillStyle = C.copper; g.fillText('ดูข้างในทีละชั้น', W / 2, 205);
 
   const ex = easeInOut(seg(t, ...T_EXPLODE)) * (1 - easeInOut(seg(t, ...T_CLOSE)));
-  const li = t >= T_LAYERS && t < T_CLOSE[0] ? Math.min(LAYERS.length - 1, Math.floor((t - T_LAYERS) / PER)) : -1;
-  const t0 = li >= 0 ? T_LAYERS + li * PER : 0;
+  let li = -1; for (let j = 1; j <= LAYERS.length; j++) if (t >= SEGS[j].start && t < SEGS[j].end) li = j - 1;
+  const t0 = li >= 0 ? SEGS[li + 1].start : 0, PER = li >= 0 ? SEGS[li + 1].end - t0 : 1;
   const ak = li >= 0 ? seg(t, t0, t0 + .35) : 0;
   drawStack(t, ex, li, ak);
 
@@ -232,13 +236,14 @@ function frame(t) {
     g.fillText(`${LAYERS[li].parts.length} ชิ้นส่วน`, 600, 500 + (nl.length - 1) * 74 + 56);
     g.restore();
     const outK = 1 - seg(t, t0 + PER - .2, t0 + PER);
-    drawDetail(LAYERS[li], li, seg(t, t0 + .05, t0 + .4) * (li === LAYERS.length - 1 ? 1 : outK), t0, t);
+    drawDetail(LAYERS[li], li, seg(t, t0 + .05, t0 + .4) * outK, t0, t, PER);
     if (li === LAYERS.length - 1 && t > T_CLOSE[0] - .3) {}
   }
   // ending
-  if (t > 42.0) {
-    pill('10 ชั้น', 330, 1260, seg(t, 42.1, 42.4), { size: 64, fill: C.ink, color: C.card });
-    pill('32 ชิ้นส่วน', 720, 1260, seg(t, 42.4, 42.7), { size: 64, fill: C.copper, color: C.card });
+  const te = T_CLOSE[1];
+  if (t > te) {
+    pill('10 ชั้น', 330, 1260, seg(t, te + .1, te + .4), { size: 64, fill: C.ink, color: C.card });
+    pill('32 ชิ้นส่วน', 720, 1260, seg(t, te + .4, te + .7), { size: 64, fill: C.copper, color: C.card });
   }
   drawCaption(t);
   // progress

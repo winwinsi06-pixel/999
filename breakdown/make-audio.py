@@ -1,6 +1,8 @@
-# Soundtrack for phone-clip.html: light plucked arpeggio plus whooshes, clicks and pops on the clip's timeline.
-import numpy as np, wave, sys
-SR = 44100; DUR = 45.0
+# Soundtrack for phone-clip.html: Thai voiceover, a light plucked arpeggio (ducked under the voice), and whooshes, clicks and pops.
+# Usage: python3 make-audio.py out.wav <voice-dir>   (voice-dir holds timeline.json from build-voice.py)
+import numpy as np, wave, sys, json, os
+TL = json.load(open(os.path.join(sys.argv[2], 'timeline.json'), encoding='utf-8'))
+SR = 44100; DUR = TL['dur']
 out = np.zeros(int(SR * DUR)); rng = np.random.default_rng(3)
 def add(sig, t, gain=1.0):
     i = int(t * SR); n = min(len(sig), len(out) - i)
@@ -33,13 +35,25 @@ def pop(t, f=900):
     add(np.sin(2 * np.pi * np.cumsum(f2) / SR) * np.exp(-tt * 45), t, .25)
 def ding(t, f=1318.5):
     n = int(1.2 * SR); tt = np.arange(n) / SR; add((np.sin(2 * np.pi * f * tt) + .4 * np.sin(2 * np.pi * f * 2 * tt)) * np.exp(-tt * 3.5), t, .3)
-whoosh(3.0, 2.0); whoosh(40.2, 1.8)
-for i in range(10):
-    t0 = 6.0 + i * 3.4; click(t0)
-    nparts = [1, 3, 3, 5, 6, 2, 4, 4, 2, 2][i]
-    for j in range(nparts): pop(t0 + .45 + j * .2, 800 + j * 90)
-ding(42.1, 1046.5); ding(42.4, 1318.5)
-out /= max(1.0, np.abs(out).max() / 0.9)
+# duck the music under the voice
+segs = TL['segments']; duck = np.ones(len(out))
+for sg in segs:
+    a, b = int((sg['voice'] - .15) * SR), int((sg['voice'] + sg['vdur'] + .2) * SR); duck[max(0, a):b] = .35
+duck = np.convolve(duck, np.ones(int(.12 * SR)) / int(.12 * SR), 'same'); out *= duck
+ex, cl = TL['explode'], TL['close']
+whoosh(ex[0], ex[1] - ex[0] + .2); whoosh(cl[0], cl[1] - cl[0])
+nparts = [1, 3, 3, 5, 6, 2, 4, 4, 2, 2]
+for i, sg in enumerate(segs[1:11]):
+    t0 = sg['start']; per = sg['end'] - t0; click(t0)
+    step = min(.45, (per - 1.4) / nparts[i])
+    for j in range(nparts[i]): pop(t0 + .45 + j * step, 800 + j * 90)
+ding(cl[1] + .1, 1046.5); ding(cl[1] + .4, 1318.5)
+# voiceover
+for sg in segs:
+    with wave.open(sg['file']) as w:
+        v = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float64) / 32768
+    add(v, sg['voice'], 1.6)
+out /= max(1.0, np.abs(out).max() / 0.92)
 f = int(1.0 * SR); out[-f:] *= np.linspace(1, 0, f)
 with wave.open(sys.argv[1], 'wb') as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((out * 32767).astype(np.int16).tobytes())
