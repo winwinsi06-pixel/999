@@ -9,7 +9,7 @@ const path = require('path'), fs = require('fs');
   const b = await chromium.launch();
   const pg = await b.newPage({ viewport: { width: 400, height: 700 } });
   pg.on('pageerror', e => console.error('pageerror', e.message));
-  await pg.goto('file://' + path.resolve(__dirname, 'pirate-clip.html') + '?render');
+  await pg.goto('file://' + (process.env.CLIP_HTML ? path.resolve(process.env.CLIP_HTML) : path.resolve(__dirname, 'pirate-clip.html')) + '?render');
   await pg.evaluate(() => window.ready);
   const grab = t => pg.evaluate(t => { renderAt(t); return document.getElementById('c').toDataURL('image/jpeg', .93).split(',')[1]; }, t);
   if (mode === 'stills') {
