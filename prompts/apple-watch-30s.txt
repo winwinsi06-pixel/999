@@ -1,0 +1,43 @@
+===== APPLE WATCH REVIEW 30s | Image-to-Video | 9:16 | ใช้รูปสินค้าเป็น reference ทุกฉาก =====
+
+--- SCENE 1 (0-6s) ตื่นเช้า ---
+Early morning in a minimal bedroom with warm golden sunlight through sheer curtains. Close-up of a wrist resting on white bedsheets; the arm lifts and the watch screen lights up softly as the wrist turns toward camera. Slow push-in camera. Dust particles in the sunbeam. Vertical 9:16. Faceless: only wrist, hands and body from neck down are visible, never show a face. The watch must match the reference image exactly: midnight black aluminum square case, black sport band, digital crown and side button on the right. Premium tech commercial look, shallow depth of field, smooth gimbal camera movement, realistic skin and lighting, photorealistic, 4K. Keep the watch screen showing a simple bright glowing display without readable text.
+
+--- SCENE 2 (6-12s) วิ่งในสวน ---
+Sunrise jog in a green Bangkok city park, mist and golden light. Low tracking shot following running legs, then a fast whip-pan up to the runner's wrist as he glances at the watch mid-run; screen glows. Sweat glistening, dynamic energetic motion, slight motion blur. Vertical 9:16. Faceless: only wrist, hands and body from neck down are visible, never show a face. The watch must match the reference image exactly: midnight black aluminum square case, black sport band, digital crown and side button on the right. Premium tech commercial look, shallow depth of field, smooth gimbal camera movement, realistic skin and lighting, photorealistic, 4K. Keep the watch screen showing a simple bright glowing display without readable text.
+
+--- SCENE 2 ALT (6-12s) ฟิตเนส ---
+Dark modern gym with blue and orange neon accent lights. Close-up of a hand gripping a dumbbell, the wrist rotates and the watch screen lights up. Slow motion, cinematic contrast. Vertical 9:16. Faceless: only wrist, hands and body from neck down are visible, never show a face. The watch must match the reference image exactly: midnight black aluminum square case, black sport band, digital crown and side button on the right. Premium tech commercial look, shallow depth of field, smooth gimbal camera movement, realistic skin and lighting, photorealistic, 4K. Keep the watch screen showing a simple bright glowing display without readable text.
+
+--- SCENE 3 (12-18s) แจ้งเตือนตอนทำงาน ---
+Cozy modern workspace with a wooden desk, laptop, iced latte and a small plant, soft window light. Hands typing on a laptop keyboard; the watch gently lights up as if receiving a notification, the hand pauses and the wrist turns to glance at it. Rack focus from keyboard to watch. Vertical 9:16. Faceless: only wrist, hands and body from neck down are visible, never show a face. The watch must match the reference image exactly: midnight black aluminum square case, black sport band, digital crown and side button on the right. Premium tech commercial look, shallow depth of field, smooth gimbal camera movement, realistic skin and lighting, photorealistic, 4K. Keep the watch screen showing a simple bright glowing display without readable text.
+
+--- SCENE 4 (18-24s) เมืองยามค่ำ ---
+Night city street in Bangkok with colorful bokeh lights and light rain reflections on the pavement. A wrist with the watch holds a coffee cup while walking; slow-motion close-up, the screen glows against the neon reflections. Moody cinematic color grade, teal and orange. Vertical 9:16. Faceless: only wrist, hands and body from neck down are visible, never show a face. The watch must match the reference image exactly: midnight black aluminum square case, black sport band, digital crown and side button on the right. Premium tech commercial look, shallow depth of field, smooth gimbal camera movement, realistic skin and lighting, photorealistic, 4K. Keep the watch screen showing a simple bright glowing display without readable text.
+
+--- SCENE 5 (24-30s) Hero shot + CTA ---
+Product hero shot: the watch floats and slowly rotates 360 degrees on a dark matte black background with soft rim lighting and subtle reflections on a glossy black surface below. Light sweep across the aluminum case highlights the digital crown. Premium tech commercial, clean and minimal, centered composition. The watch must match the reference image exactly: midnight black aluminum square case, black sport band. Vertical 9:16, 4K, photorealistic.
+
+===== ข้อความบนจอ (CapCut) =====
+0-6s   นาฬิกาเรือนเดียว ช่วยทั้งวัน ⌚
+6-12s  วิ่ง ออกกำลังกาย จับให้หมด
+12-18s ข้อความเข้า ไม่ต้องหยิบมือถือ
+18-24s ใส่ได้ทุกลุค ทุกที่
+24-30s ของแท้ Shopee Mall | ราคา [xxx] กดตะกร้าเลย 👇
+
+===== เสียงพากย์ (เสียงมั่นใจ เร็วปานกลาง) =====
+(0-6)   ตื่นเช้ามา ยกข้อมือปุ๊บ เห็นทุกอย่างปั๊บ
+(6-12)  ไปวิ่ง ไปออกกำลังกาย มันจับให้ครบ
+(12-18) ทำงานอยู่ มีข้อความเข้า ดูบนข้อมือได้เลย ไม่ต้องหยิบมือถือ
+(18-24) ดีไซน์เรียบ ใส่ได้ทุกลุค
+(24-30) ของแท้จาก Shopee Mall ราคา [xxx] กดตะกร้าเลย!
+
+===== เพลง =====
+Electronic / Upbeat 110-125 BPM จาก Commercial Music Library | ตัดเปลี่ยนฉากตามจังหวะกลอง
+
+===== เช็กก่อนโพสต์ =====
+[ ] ใส่ราคาจริงแทน [xxx]
+[ ] ซ้อนภาพหน้าจอจริงทับจอนาฬิกา (Overlay) ฉาก 1-3
+[ ] ใส่เสียง "ติ๊ง" ตอนแจ้งเตือน + เสียง "วูบ" ตอนเปลี่ยนฉาก
+[ ] พูดเฉพาะฟีเจอร์ที่รุ่นนี้มีจริง
+[ ] ติดป้าย AI-generated content ตอนโพสต์
